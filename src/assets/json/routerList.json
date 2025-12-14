@@ -544,12 +544,60 @@
 			}
 		},
 		{
-			"path": "/newPage",
-			"name": "newPage",
-			"component": "/newPage/index",
+			"path": "/userMgt",
+			"name": "userMgt",
+			"component": "/userMgt/index",
 			"id": "j",
 			"parentId": null,
-			"title": "新页面",
+			"title": "用户管理",
+			"meta": {
+				"icon": "Document",
+				"isLink": "",
+				"isHide": false,
+				"isFull": false,
+				"isAffix": false,
+				"isKeepAlive": true
+			}
+		},
+		{
+			"path": "/videoMgt",
+			"name": "videoMgt",
+			"component": "/videoMgt/index",
+			"id": "k",
+			"parentId": null,
+			"title": "视频管理",
+			"meta": {
+				"icon": "Document",
+				"isLink": "",
+				"isHide": false,
+				"isFull": false,
+				"isAffix": false,
+				"isKeepAlive": true
+			}
+		},
+		{
+			"path": "/commentMgt",
+			"name": "commentMgt",
+			"component": "/commentMgt/index",
+			"id": "l",
+			"parentId": null,
+			"title": "评论管理",
+			"meta": {
+				"icon": "Document",
+				"isLink": "",
+				"isHide": false,
+				"isFull": false,
+				"isAffix": false,
+				"isKeepAlive": true
+			}
+		},
+		{
+			"path": "/systemMgt",
+			"name": "systemMgt",
+			"component": "/systemMgt/index",
+			"id": "m",
+			"parentId": null,
+			"title": "消息管理",
 			"meta": {
 				"icon": "Document",
 				"isLink": "",
