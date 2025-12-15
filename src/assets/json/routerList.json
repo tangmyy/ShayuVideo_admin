@@ -606,6 +606,22 @@
 				"isAffix": false,
 				"isKeepAlive": true
 			}
+		},
+		{
+			"path": "/msgMgt",
+			"name": "msgMgt",
+			"component": "/msgMgt/index",
+			"id": "n",
+			"parentId": null,
+			"title": "消息管理",
+			"meta": {
+				"icon": "Document",
+				"isLink": "",
+				"isHide": false,
+				"isFull": false,
+				"isAffix": false,
+				"isKeepAlive": true
+			}
 		}
 
 	],

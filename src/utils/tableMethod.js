@@ -45,9 +45,13 @@ export function useTable(config) {
       
       // 确保 list 是数组
       if (!Array.isArray(list)) {
-        // 尝试直接从 res.data.data.rows 获取
-        if (res.data && res.data.data && res.data.data.rows) {
+        // 情况一：后端是分页结果，data.rows 是数组
+        if (res.data && res.data.data && Array.isArray(res.data.data.rows)) {
           list = res.data.data.rows;
+        }
+        // 情况二：后端直接返回 list（例如 /msg/admin/list），data 本身就是数组
+        else if (res.data && Array.isArray(res.data.data)) {
+          list = res.data.data;
         } else {
           list = [];
         }
@@ -55,15 +59,16 @@ export function useTable(config) {
       
       // 获取总数
       let total = 0;
-      if (res.data && res.data.data) {
-        // PagedGridResult: data = { page, total, records, rows }
+      // 情形一：后端返回 PagedGridResult，res.data.data 是一个对象 { page, total, records, rows }
+      if (res.data && res.data.data && !Array.isArray(res.data.data)) {
         total = res.data.data.records || res.data.data.total || 0;
       } else {
-        // 备用方案：从配置的路径获取（如 data.records、data.total）
+        // 情形二：像 /msg/admin/list 这种，res.data.data 是数组 list<MessageMO>，
+        // 或者我们在 request.totalKey 里自定义了路径（例如 "data.length"）
         total = get(responseData, totalKey) || 0;
-        // 如果 data 本身就是数组（比如消息列表 /msg/admin/list），用长度作为总数
-        if (!total && Array.isArray(res.data)) {
-          total = res.data.length;
+        // 兜底：如果 total 还是 0，并且 data 本身是数组，就用数组长度当总数
+        if (!total && Array.isArray(res.data?.data)) {
+          total = res.data.data.length;
         }
       }
       tableTotal.value = Number(total);

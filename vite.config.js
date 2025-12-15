@@ -66,6 +66,12 @@ export default defineConfig(({ mode }) => {
 					target: "http://106.54.6.213:8088",
 					changeOrigin: true,
 					secure: false
+				},
+				// 消息管理相关接口
+				"/msg": {
+					target: "http://106.54.6.213:8088",
+					changeOrigin: true,
+					secure: false
 				}
 			}
 		},
