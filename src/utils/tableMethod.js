@@ -38,11 +38,39 @@ export function useTable(config) {
     try {
       tableLoading.value = true;
       const res = await api(params.value);
-      let list = get(res, tableDataKey);
+      // axios 返回的数据在 res.data 中
+      const responseData = res.data || res;
       
-      tableTotal.value = Number(get(res, totalKey) || 0);
+      let list = get(responseData, tableDataKey);
+      
+      // 确保 list 是数组
+      if (!Array.isArray(list)) {
+        // 尝试直接从 res.data.data.rows 获取
+        if (res.data && res.data.data && res.data.data.rows) {
+          list = res.data.data.rows;
+        } else {
+          list = [];
+        }
+      }
+      
+      // 获取总数 - 优先从 res.data.data.records 获取（总记录数）
+      let total = 0;
+      if (res.data && res.data.data) {
+        // 优先使用 records（总记录数）
+        total = res.data.data.records || res.data.data.total || 0;
+      } else {
+        // 备用方案：从配置的路径获取
+        total = get(responseData, totalKey) || 0;
+      }
+      tableTotal.value = Number(total);
+      console.log('分页调试 - 总数:', tableTotal.value, '当前页:', params.value[pageNumKey], '每页:', params.value[pageSizeKey]);
+      
       if (handleResponseData) {
-        handleResponseData(list);
+        const processedData = handleResponseData(list);
+        // 如果 handleResponseData 返回了数据，使用返回的数据
+        if (Array.isArray(processedData)) {
+          list = processedData;
+        }
       }
       tableData.value = list;
       return Promise.resolve(res);

@@ -43,10 +43,10 @@ export default defineConfig(({ mode }) => {
 			cors: true,
 			// 跨域代理配置
 			proxy: {
-				"/api": {
-					target: "https://gitee.com", // easymock
+				"/userInfo": {
+					target: "http://106.54.6.213:8088",
 					changeOrigin: true,
-					rewrite: path => path.replace(/^\/api/, "")
+					secure: false
 				}
 			}
 		},
