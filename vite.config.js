@@ -43,7 +43,14 @@ export default defineConfig(({ mode }) => {
 			cors: true,
 			// 跨域代理配置
 			proxy: {
+				// 用户管理相关接口
 				"/userInfo": {
+					target: "http://106.54.6.213:8088",
+					changeOrigin: true,
+					secure: false
+				},
+				// 视频管理相关接口
+				"/vlog": {
 					target: "http://106.54.6.213:8088",
 					changeOrigin: true,
 					secure: false
