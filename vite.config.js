@@ -54,6 +54,12 @@ export default defineConfig(({ mode }) => {
 					target: "http://106.54.6.213:8088",
 					changeOrigin: true,
 					secure: false
+				},
+				// 评论管理相关接口
+				"/comment": {
+					target: "http://106.54.6.213:8088",
+					changeOrigin: true,
+					secure: false
 				}
 			}
 		},
