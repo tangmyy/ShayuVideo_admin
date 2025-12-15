@@ -592,12 +592,12 @@
 			}
 		},
 		{
-			"path": "/systemMgt",
-			"name": "systemMgt",
-			"component": "/systemMgt/index",
+			"path": "/fansMgt",
+			"name": "fansMgt",
+			"component": "/fansMgt/index",
 			"id": "m",
 			"parentId": null,
-			"title": "消息管理",
+			"title": "粉丝管理",
 			"meta": {
 				"icon": "Document",
 				"isLink": "",
@@ -607,6 +607,7 @@
 				"isKeepAlive": true
 			}
 		}
+
 	],
 	"msg": "成功"
 }

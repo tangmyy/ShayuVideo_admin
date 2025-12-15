@@ -53,14 +53,18 @@ export function useTable(config) {
         }
       }
       
-      // 获取总数 - 优先从 res.data.data.records 获取（总记录数）
+      // 获取总数
       let total = 0;
       if (res.data && res.data.data) {
-        // 优先使用 records（总记录数）
+        // PagedGridResult: data = { page, total, records, rows }
         total = res.data.data.records || res.data.data.total || 0;
       } else {
-        // 备用方案：从配置的路径获取
+        // 备用方案：从配置的路径获取（如 data.records、data.total）
         total = get(responseData, totalKey) || 0;
+        // 如果 data 本身就是数组（比如消息列表 /msg/admin/list），用长度作为总数
+        if (!total && Array.isArray(res.data)) {
+          total = res.data.length;
+        }
       }
       tableTotal.value = Number(total);
       console.log('分页调试 - 总数:', tableTotal.value, '当前页:', params.value[pageNumKey], '每页:', params.value[pageSizeKey]);
