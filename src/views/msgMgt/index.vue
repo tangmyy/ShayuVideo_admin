@@ -18,7 +18,8 @@
 			style="margin-bottom: 10px"
 		/>
 
-		<el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
+		<div class="table-wrapper">
+			<el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
 			<el-table-column prop="id" label="消息ID" width="220" show-overflow-tooltip />
 
 			<el-table-column prop="fromNickname" label="发送方昵称" width="160" show-overflow-tooltip />
@@ -58,6 +59,7 @@
 				</template>
 			</el-table-column>
 		</el-table>
+		</div>
 
 		<div style="display: flex; justify-content: flex-end; margin-top: 10px">
 			<div style="margin-right: 20px; font-size: 12px; color: #999">
@@ -153,3 +155,13 @@ onMounted(() => {
 	// 默认不自动查询，避免 userId 为空
 });
 </script>
+<style scoped>
+.table-wrapper {
+	overflow-x: auto;
+	overflow-y: visible;
+}
+.table-wrapper :deep(.el-table__body-wrapper) {
+	overflow-y: visible !important;
+	overflow-x: auto !important;
+}
+</style>

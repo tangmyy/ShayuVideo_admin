@@ -22,3 +22,28 @@ export const getUserList = (params) => {
 	});
 };
 
+/**
+ * 管理端：修改用户信息
+ * @param {Object} updatedUserBO - 用户信息对象
+ * @param {String} updatedUserBO.id - 用户ID（必需）
+ * @param {String} updatedUserBO.nickname - 昵称（可选）
+ * @param {String} updatedUserBO.mobile - 手机号（可选）
+ * @param {String} updatedUserBO.face - 头像URL（可选）
+ * @param {Number} updatedUserBO.sex - 性别：0-女，1-男，2-未知（可选）
+ * @param {String} updatedUserBO.birthday - 生日（可选）
+ * @param {String} updatedUserBO.country - 国家（可选）
+ * @param {String} updatedUserBO.province - 省份（可选）
+ * @param {String} updatedUserBO.city - 城市（可选）
+ * @param {String} updatedUserBO.district - 区县（可选）
+ * @param {String} updatedUserBO.description - 个人简介（可选）
+ * @param {String} updatedUserBO.bgImg - 背景图URL（可选）
+ * @returns {Promise} 返回修改后的用户信息
+ */
+export const updateUserInfo = (updatedUserBO) => {
+	return service({
+		method: "POST",
+		url: "/userInfo/admin/update",
+		data: updatedUserBO
+	});
+};
+

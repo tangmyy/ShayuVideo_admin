@@ -10,7 +10,8 @@
       </el-form-item>
     </el-form>
 
-    <el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
+    <div class="table-wrapper">
+      <el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
       <!-- 使用 IndexVlogVO 的字段 -->
       <el-table-column prop="vlogId" label="视频ID" width="180" />
 
@@ -60,6 +61,7 @@
 
       <!-- IndexVlogVO 中没有时间字段，这里先不展示创建/更新时间 -->
     </el-table>
+    </div>
 
     <div style="display: flex; justify-content: flex-end; margin-top: 10px">
       <el-pagination
@@ -100,5 +102,15 @@ onMounted(() => {
   handleSearch();
 });
 </script>
+<style scoped>
+.table-wrapper {
+	overflow-x: auto;
+	overflow-y: visible;
+}
+.table-wrapper :deep(.el-table__body-wrapper) {
+	overflow-y: visible !important;
+	overflow-x: auto !important;
+}
+</style>
 
 

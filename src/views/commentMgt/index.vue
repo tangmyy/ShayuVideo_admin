@@ -21,7 +21,8 @@
       style="margin-bottom: 10px"
     />
 
-    <el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
+    <div class="table-wrapper">
+      <el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
       <el-table-column prop="commentId" label="评论ID" width="180" />
       <el-table-column prop="vlogId" label="视频ID" width="180" />
       <el-table-column prop="fatherCommentId" label="父评论ID" width="180" show-overflow-tooltip />
@@ -61,6 +62,7 @@
         </template>
       </el-table-column>
     </el-table>
+    </div>
 
     <div style="display: flex; justify-content: flex-end; margin-top: 10px">
       <div style="margin-right: 20px; font-size: 12px; color: #999;">
@@ -127,5 +129,15 @@ onMounted(() => {
   // handleSearch();
 });
 </script>
+<style scoped>
+.table-wrapper {
+	overflow-x: auto;
+	overflow-y: visible;
+}
+.table-wrapper :deep(.el-table__body-wrapper) {
+	overflow-y: visible !important;
+	overflow-x: auto !important;
+}
+</style>
 
 
