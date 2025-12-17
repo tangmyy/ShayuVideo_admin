@@ -21,3 +21,25 @@ export const getVlogAdminList = (params = {}) => {
 		}
 	});
 };
+
+/**
+ * 管理端：修改视频信息
+ * 后端接口：/vlog/admin/update（预留）
+ *
+ * @param {Object} updatedVlogBO - 视频信息对象
+ * @param {String} updatedVlogBO.vlogId - 视频ID（必需）
+ * @param {String} updatedVlogBO.content - 标题/文案（可选）
+ * @param {String} updatedVlogBO.cover - 封面URL（可选）
+ * @param {String} updatedVlogBO.url - 播放地址（可选）
+ * @param {Number} updatedVlogBO.width - 宽度（可选）
+ * @param {Number} updatedVlogBO.height - 高度（可选）
+ * @param {Number} updatedVlogBO.isPrivate - 权限：1-私密，0-公开（可选）
+ * @returns {Promise} 返回修改后的视频信息
+ */
+export const updateVlogInfo = (updatedVlogBO) => {
+	return service({
+		method: "POST",
+		url: "/vlog/admin/update",
+		data: updatedVlogBO
+	});
+};

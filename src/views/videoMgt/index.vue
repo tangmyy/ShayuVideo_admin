@@ -60,8 +60,54 @@
       </el-table-column>
 
       <!-- IndexVlogVO 中没有时间字段，这里先不展示创建/更新时间 -->
+      <el-table-column label="操作" width="120" fixed="right">
+        <template #default="{ row }">
+          <el-button type="primary" size="small" @click="handleEdit(row)">修改</el-button>
+        </template>
+      </el-table-column>
     </el-table>
     </div>
+
+    <!-- 编辑视频对话框 -->
+    <el-dialog v-model="dialogVisible" title="修改视频信息" width="600px" :close-on-click-modal="false">
+      <el-form ref="editFormRef" :model="editForm" :rules="editFormRules" label-width="100px">
+        <el-form-item label="视频ID" prop="vlogId">
+          <el-input v-model="editForm.vlogId" disabled />
+        </el-form-item>
+        <el-form-item label="标题/文案" prop="content">
+          <el-input v-model="editForm.content" type="textarea" :rows="3" placeholder="请输入标题/文案" clearable />
+        </el-form-item>
+        <el-form-item label="封面URL" prop="cover">
+          <el-input v-model="editForm.cover" placeholder="请输入封面URL" clearable />
+          <el-image
+            v-if="editForm.cover"
+            :src="editForm.cover"
+            style="width: 110px; height: 62px; margin-top: 5px"
+            fit="cover"
+            :preview-src-list="[editForm.cover]"
+          />
+        </el-form-item>
+        <el-form-item label="播放地址" prop="url">
+          <el-input v-model="editForm.url" placeholder="请输入播放地址" clearable />
+        </el-form-item>
+        <el-form-item label="宽度" prop="width">
+          <el-input-number v-model="editForm.width" :min="0" placeholder="请输入宽度" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="高度" prop="height">
+          <el-input-number v-model="editForm.height" :min="0" placeholder="请输入高度" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="权限" prop="isPrivate">
+          <el-select v-model="editForm.isPrivate" placeholder="请选择权限" clearable style="width: 100%">
+            <el-option label="公开" :value="0" />
+            <el-option label="私密" :value="1" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
+      </template>
+    </el-dialog>
 
     <div style="display: flex; justify-content: flex-end; margin-top: 10px">
       <el-pagination
@@ -79,8 +125,9 @@
 </template>
 
 <script setup name="videoMgt">
-import { onMounted } from "vue";
-import { getVlogAdminList } from "@/api/vlogMgt";
+import { onMounted, ref, reactive } from "vue";
+import { ElMessage } from "element-plus";
+import { getVlogAdminList, updateVlogInfo } from "@/api/vlogMgt";
 import { useTable } from "@/utils/tableMethod";
 
 const { params, tableTotal, tableData, tableLoading, handleSearch, handleReset, handleSizeChange, handleCurrentChange } =
@@ -97,6 +144,82 @@ const { params, tableTotal, tableData, tableLoading, handleSearch, handleReset, 
       }
     }
   });
+
+// 编辑对话框相关
+const dialogVisible = ref(false);
+const editFormRef = ref();
+const submitLoading = ref(false);
+const editForm = reactive({
+  vlogId: "",
+  content: "",
+  cover: "",
+  url: "",
+  width: undefined,
+  height: undefined,
+  isPrivate: undefined
+});
+
+// 表单验证规则
+const editFormRules = {
+  vlogId: [{ required: true, message: "视频ID不能为空", trigger: "blur" }]
+};
+
+// 打开编辑对话框
+const handleEdit = row => {
+  // 填充表单数据
+  editForm.vlogId = row.vlogId || "";
+  editForm.content = row.content || "";
+  editForm.cover = row.cover || "";
+  editForm.url = row.url || "";
+  editForm.width = row.width !== undefined && row.width !== null ? row.width : undefined;
+  editForm.height = row.height !== undefined && row.height !== null ? row.height : undefined;
+  editForm.isPrivate = row.isPrivate !== undefined && row.isPrivate !== null ? row.isPrivate : undefined;
+  dialogVisible.value = true;
+};
+
+// 提交表单
+const handleSubmit = async () => {
+  if (!editFormRef.value) return;
+
+  try {
+    await editFormRef.value.validate();
+
+    if (!editForm.vlogId) {
+      ElMessage.error("视频ID不能为空");
+      return;
+    }
+
+    submitLoading.value = true;
+
+    // 构建提交数据，只包含有值的字段
+    const submitData = {
+      vlogId: editForm.vlogId
+    };
+
+    if (editForm.content) submitData.content = editForm.content;
+    if (editForm.cover) submitData.cover = editForm.cover;
+    if (editForm.url) submitData.url = editForm.url;
+    if (editForm.width !== undefined && editForm.width !== null) submitData.width = editForm.width;
+    if (editForm.height !== undefined && editForm.height !== null) submitData.height = editForm.height;
+    if (editForm.isPrivate !== undefined && editForm.isPrivate !== null) submitData.isPrivate = editForm.isPrivate;
+
+    const res = await updateVlogInfo(submitData);
+
+    if (res.data && res.data.success) {
+      ElMessage.success("修改成功");
+      dialogVisible.value = false;
+      // 刷新列表
+      handleSearch();
+    } else {
+      ElMessage.error(res.data?.msg || "修改失败");
+    }
+  } catch (error) {
+    console.error("修改视频信息失败:", error);
+    ElMessage.error(error.response?.data?.msg || "修改失败，请稍后重试");
+  } finally {
+    submitLoading.value = false;
+  }
+};
 
 onMounted(() => {
   handleSearch();
