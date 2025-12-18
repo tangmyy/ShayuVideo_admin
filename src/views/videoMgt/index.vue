@@ -69,7 +69,7 @@
 		</div>
 
 		<!-- 编辑视频对话框 -->
-		<el-dialog v-model="dialogVisible" title="修改视频信息" width="600px" :close-on-click-modal="false">
+		<el-dialog v-model="dialogVisible" title="编辑视频信息" width="600px" :close-on-click-modal="false">
 			<el-form ref="editFormRef" :model="editForm" :rules="editFormRules" label-width="100px">
 				<el-form-item label="视频ID" prop="vlogId">
 					<el-input v-model="editForm.vlogId" disabled />
@@ -206,16 +206,16 @@ const handleSubmit = async () => {
 		const res = await updateVlogInfo(submitData);
 
 		if (res.data && res.data.success) {
-			ElMessage.success("修改成功");
+			ElMessage.success("编辑成功");
 			dialogVisible.value = false;
 			// 刷新列表
 			handleSearch();
 		} else {
-			ElMessage.error(res.data?.msg || "修改失败");
+			ElMessage.error(res.data?.msg || "编辑失败");
 		}
 	} catch (error) {
-		console.error("修改视频信息失败:", error);
-		ElMessage.error(error.response?.data?.msg || "修改失败，请稍后重试");
+		console.error("编辑视频信息失败:", error);
+		ElMessage.error(error.response?.data?.msg || "编辑失败，请稍后重试");
 	} finally {
 		submitLoading.value = false;
 	}

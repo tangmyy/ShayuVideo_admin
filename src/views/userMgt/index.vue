@@ -18,6 +18,13 @@
 				<el-table-column prop="nickname" label="昵称" width="150" />
 				<el-table-column prop="mobile" label="手机号" width="130" />
 				<el-table-column prop="videoNum" label="视频号" width="130" />
+				<el-table-column prop="canVideoNumBeUpdated" label="视频号可修改" width="120">
+					<template #default="{ row }">
+						<el-tag :type="row.canVideoNumBeUpdated === 1 ? 'success' : 'danger'">
+							{{ row.canVideoNumBeUpdated === 1 ? "可修改" : "不可修改" }}
+						</el-tag>
+					</template>
+				</el-table-column>
 				<el-table-column prop="face" label="头像" width="100">
 					<template #default="{ row }">
 						<el-image
@@ -75,7 +82,7 @@
 			</el-table>
 		</div>
 		<!-- 编辑用户对话框 -->
-		<el-dialog v-model="dialogVisible" title="修改用户信息" width="600px" :close-on-click-modal="false">
+		<el-dialog v-model="dialogVisible" title="编辑用户信息" width="600px" :close-on-click-modal="false">
 			<el-form ref="editFormRef" :model="editForm" :rules="editFormRules" label-width="100px">
 				<el-form-item label="用户ID" prop="id">
 					<el-input v-model="editForm.id" disabled />
@@ -84,10 +91,21 @@
 					<el-input v-model="editForm.nickname" placeholder="请输入昵称" clearable />
 				</el-form-item>
 				<el-form-item label="手机号" prop="mobile">
-					<el-input v-model="editForm.mobile" placeholder="手机号（不支持修改）" disabled />
+					<el-input v-model="editForm.mobile" placeholder="手机号（不支持编辑）" disabled />
+				</el-form-item>
+				<el-form-item label="视频号" prop="videoNum">
+					<el-input
+						v-model="editForm.videoNum"
+						:placeholder="editForm.canVideoNumBeUpdated === 1 ? '请输入视频号' : '视频号不可修改'"
+						:disabled="editForm.canVideoNumBeUpdated !== 1"
+						clearable
+					/>
+					<div v-if="editForm.canVideoNumBeUpdated !== 1" style="font-size: 12px; color: #f56c6c; margin-top: 5px">
+						提示：该用户的视频号已修改过，不能再修改
+					</div>
 				</el-form-item>
 				<el-form-item label="头像" prop="face">
-					<el-input v-model="editForm.face" placeholder="头像URL（仅显示，需通过文件上传功能修改）" disabled />
+					<el-input v-model="editForm.face" placeholder="头像URL（仅显示，需通过文件上传功能编辑）" disabled />
 					<el-image
 						v-if="editForm.face"
 						:src="editForm.face"
@@ -95,7 +113,7 @@
 						fit="cover"
 						:preview-src-list="[editForm.face]"
 					/>
-					<div style="font-size: 12px; color: #999; margin-top: 5px">提示：头像需通过文件上传功能修改</div>
+					<div style="font-size: 12px; color: #999; margin-top: 5px">提示：头像需通过文件上传功能编辑</div>
 				</el-form-item>
 				<el-form-item label="性别" prop="sex">
 					<el-select v-model="editForm.sex" placeholder="请选择性别" clearable style="width: 100%">
@@ -130,7 +148,7 @@
 					<el-input v-model="editForm.description" type="textarea" :rows="3" placeholder="请输入个人简介" clearable />
 				</el-form-item>
 				<el-form-item label="背景图" prop="bgImg">
-					<el-input v-model="editForm.bgImg" placeholder="背景图URL（仅显示，需通过文件上传功能修改）" disabled />
+					<el-input v-model="editForm.bgImg" placeholder="背景图URL（仅显示，需通过文件上传功能编辑）" disabled />
 					<el-image
 						v-if="editForm.bgImg"
 						:src="editForm.bgImg"
@@ -138,7 +156,7 @@
 						fit="cover"
 						:preview-src-list="[editForm.bgImg]"
 					/>
-					<div style="font-size: 12px; color: #999; margin-top: 5px">提示：背景图需通过文件上传功能修改</div>
+					<div style="font-size: 12px; color: #999; margin-top: 5px">提示：背景图需通过文件上传功能编辑</div>
 				</el-form-item>
 			</el-form>
 			<template #footer>
@@ -209,6 +227,8 @@ const editForm = reactive({
 	id: "",
 	nickname: "",
 	mobile: "",
+	videoNum: "",
+	canVideoNumBeUpdated: undefined,
 	face: "",
 	sex: undefined,
 	birthday: "",
@@ -225,7 +245,7 @@ const editFormRules = {
 	id: [{ required: true, message: "用户ID不能为空", trigger: "blur" }]
 };
 
-// 保存原始数据，用于比较是否有修改
+// 保存原始数据，用于比较是否有编辑
 const originalData = reactive({});
 
 // 打开编辑对话框
@@ -234,6 +254,8 @@ const handleEdit = row => {
 	editForm.id = row.id || "";
 	editForm.nickname = row.nickname || "";
 	editForm.mobile = row.mobile || "";
+	editForm.videoNum = row.videoNum || "";
+	editForm.canVideoNumBeUpdated = row.canVideoNumBeUpdated;
 	editForm.face = row.face || "";
 	editForm.sex = row.sex !== undefined && row.sex !== null ? row.sex : undefined;
 	editForm.birthday = row.birthday ? new Date(row.birthday).toISOString().split("T")[0] : "";
@@ -247,6 +269,8 @@ const handleEdit = row => {
 	// 保存原始数据用于比较
 	originalData.id = row.id || "";
 	originalData.nickname = row.nickname || "";
+	originalData.videoNum = row.videoNum || "";
+	originalData.canVideoNumBeUpdated = row.canVideoNumBeUpdated;
 	originalData.sex = row.sex;
 	originalData.birthday = row.birthday ? new Date(row.birthday).toISOString().split("T")[0] : "";
 	originalData.country = row.country || "";
@@ -272,10 +296,10 @@ const handleSubmit = async () => {
 
 		submitLoading.value = true;
 
-		// 检查哪些字段被修改了，并根据类型分组
+		// 检查哪些字段被编辑了，并根据类型分组
 		const updateTasks = [];
 
-		// 1. 检查昵称是否修改 (type=1)
+		// 1. 检查昵称是否编辑 (type=1)
 		if (editForm.nickname !== originalData.nickname && editForm.nickname) {
 			updateTasks.push({
 				type: MODIFY_TYPE.NICKNAME,
@@ -283,7 +307,21 @@ const handleSubmit = async () => {
 			});
 		}
 
-		// 2. 检查性别是否修改 (type=3)
+		// 2. 检查视频号是否编辑 (type=2)
+		if (editForm.videoNum !== originalData.videoNum && editForm.videoNum) {
+			// 检查是否可以修改视频号
+			if (editForm.canVideoNumBeUpdated !== 1) {
+				ElMessage.error("该用户的视频号已修改过，不能再修改");
+				submitLoading.value = false;
+				return;
+			}
+			updateTasks.push({
+				type: MODIFY_TYPE.VIDEONUM,
+				data: { id: editForm.id, videoNum: editForm.videoNum }
+			});
+		}
+
+		// 3. 检查性别是否编辑 (type=3)
 		if (editForm.sex !== originalData.sex && editForm.sex !== undefined && editForm.sex !== null) {
 			updateTasks.push({
 				type: MODIFY_TYPE.SEX,
@@ -291,7 +329,7 @@ const handleSubmit = async () => {
 			});
 		}
 
-		// 3. 检查生日是否修改 (type=4)
+		// 4. 检查生日是否编辑 (type=4)
 		if (editForm.birthday !== originalData.birthday && editForm.birthday) {
 			updateTasks.push({
 				type: MODIFY_TYPE.BIRTHDAY,
@@ -299,7 +337,7 @@ const handleSubmit = async () => {
 			});
 		}
 
-		// 4. 检查所在地是否修改 (type=5) - country/province/city/district 任意一个改变都算
+		// 5. 检查所在地是否编辑 (type=5) - country/province/city/district 任意一个改变都算
 		const locationChanged =
 			editForm.country !== originalData.country ||
 			editForm.province !== originalData.province ||
@@ -318,7 +356,7 @@ const handleSubmit = async () => {
 			});
 		}
 
-		// 5. 检查简介是否修改 (type=6)
+		// 6. 检查简介是否编辑 (type=6)
 		if (editForm.description !== originalData.description && editForm.description) {
 			updateTasks.push({
 				type: MODIFY_TYPE.DESC,
@@ -328,7 +366,7 @@ const handleSubmit = async () => {
 
 		// 如果没有需要更新的字段
 		if (updateTasks.length === 0) {
-			ElMessage.warning("没有需要修改的内容");
+			ElMessage.warning("没有需要编辑的内容");
 			submitLoading.value = false;
 			return;
 		}
@@ -344,30 +382,30 @@ const handleSubmit = async () => {
 					successCount++;
 				} else {
 					failCount++;
-					console.error(`修改失败 (type=${task.type}):`, res.data?.msg || "未知错误");
+					console.error(`编辑失败 (type=${task.type}):`, res.data?.msg || "未知错误");
 				}
 			} catch (error) {
 				failCount++;
-				console.error(`修改失败 (type=${task.type}):`, error);
+				console.error(`编辑失败 (type=${task.type}):`, error);
 			}
 		}
 
 		// 显示结果
 		if (failCount === 0) {
-			ElMessage.success(`修改成功（共 ${successCount} 项）`);
+			ElMessage.success(`编辑成功（共 ${successCount} 项）`);
 			dialogVisible.value = false;
 			// 刷新列表
 			handleSearch();
 		} else if (successCount > 0) {
-			ElMessage.warning(`部分修改成功（成功 ${successCount} 项，失败 ${failCount} 项）`);
+			ElMessage.warning(`部分编辑成功（成功 ${successCount} 项，失败 ${failCount} 项）`);
 			// 即使部分失败也刷新列表
 			handleSearch();
 		} else {
-			ElMessage.error("修改失败，请稍后重试");
+			ElMessage.error("编辑失败，请稍后重试");
 		}
 	} catch (error) {
-		console.error("修改用户信息失败:", error);
-		ElMessage.error(error.response?.data?.msg || "修改失败，请稍后重试");
+		console.error("编辑用户信息失败:", error);
+		ElMessage.error(error.response?.data?.msg || "编辑失败，请稍后重试");
 	} finally {
 		submitLoading.value = false;
 	}
