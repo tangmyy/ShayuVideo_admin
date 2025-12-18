@@ -2,7 +2,7 @@ import service from "@/utils/service.js";
 
 /**
  * 管理端：粉丝列表
- * 后端接口：/fans/admin/list
+ * 后端接口：/admin/fans/list
  *
  * @param {Object} params - 查询参数
  * @param {String} params.myId - 用户id（查看该用户的粉丝列表，必填）
@@ -13,9 +13,9 @@ import service from "@/utils/service.js";
 export const getFansAdminList = (params = {}) => {
 	return service({
 		method: "GET",
-		url: "/fans/admin/list", // 通过 Vite 代理转发到后端
+		url: "/admin/fans/list",
 		params: {
-			myId: params.myId,              // 必填：用户 id
+			myId: params.myId,
 			page: params.page || 1,
 			pageSize: params.pageSize || 10
 		}

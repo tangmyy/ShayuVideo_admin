@@ -2,7 +2,7 @@ import service from "@/utils/service.js";
 
 /**
  * 管理端：评论列表
- * 后端接口：/comment/admin/list
+ * 后端接口：/admin/comment/list
  *
  * @param {Object} params - 查询参数
  * @param {String} params.vlogId - 视频ID（必填）
@@ -14,10 +14,10 @@ import service from "@/utils/service.js";
 export const getCommentAdminList = (params = {}) => {
 	return service({
 		method: "GET",
-		url: "/comment/admin/list", // 通过 Vite 代理转发到后端
+		url: "/admin/comment/list",
 		params: {
-			vlogId: params.vlogId, // 后端必填，前端需要传入
-			userId: params.userId || "", // 管理端可传空字符串
+			vlogId: params.vlogId,
+			userId: params.userId || "",
 			page: params.page || 1,
 			pageSize: params.pageSize || 10
 		}
@@ -26,7 +26,7 @@ export const getCommentAdminList = (params = {}) => {
 
 /**
  * 管理端：修改评论信息
- * 后端接口：/comment/admin/update（预留）
+ * 后端接口：/admin/comment/update（预留）
  *
  * @param {Object} updatedCommentBO - 评论信息对象
  * @param {String} updatedCommentBO.commentId - 评论ID（必需）
@@ -38,7 +38,7 @@ export const getCommentAdminList = (params = {}) => {
 export const updateCommentInfo = (updatedCommentBO) => {
 	return service({
 		method: "POST",
-		url: "/comment/admin/update",
+		url: "/admin/comment/update",
 		data: updatedCommentBO
 	});
 };

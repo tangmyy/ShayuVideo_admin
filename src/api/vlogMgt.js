@@ -2,7 +2,7 @@ import service from "@/utils/service.js";
 
 /**
  * 管理端：视频列表
- * 后端接口：/vlog/admin/list
+ * 后端接口：/admin/vlog/list
  *
  * @param {Object} params - 查询参数
  * @param {String} params.search - 搜索关键字（可选）
@@ -13,7 +13,7 @@ import service from "@/utils/service.js";
 export const getVlogAdminList = (params = {}) => {
 	return service({
 		method: "GET",
-		url: "/vlog/admin/list", // 通过 Vite 代理转发到后端
+		url: "/admin/vlog/list",
 		params: {
 			search: params.search || undefined,
 			page: params.page || 1,
@@ -24,7 +24,7 @@ export const getVlogAdminList = (params = {}) => {
 
 /**
  * 管理端：修改视频信息
- * 后端接口：/vlog/admin/update（预留）
+ * 后端接口：/admin/vlog/update（预留）
  *
  * @param {Object} updatedVlogBO - 视频信息对象
  * @param {String} updatedVlogBO.vlogId - 视频ID（必需）
@@ -39,7 +39,7 @@ export const getVlogAdminList = (params = {}) => {
 export const updateVlogInfo = (updatedVlogBO) => {
 	return service({
 		method: "POST",
-		url: "/vlog/admin/update",
+		url: "/admin/vlog/update",
 		data: updatedVlogBO
 	});
 };

@@ -43,32 +43,8 @@ export default defineConfig(({ mode }) => {
 			cors: true,
 			// 跨域代理配置
 			proxy: {
-				// 管理后台统一接口（优先级最高，放在最前面）
+				// 管理后台统一接口
 				"/admin": {
-					target: "http://106.54.6.213:8088",
-					changeOrigin: true,
-					secure: false
-				},
-				// 视频管理相关接口
-				"/vlog": {
-					target: "http://106.54.6.213:8088",
-					changeOrigin: true,
-					secure: false
-				},
-				// 评论管理相关接口
-				"/comment": {
-					target: "http://106.54.6.213:8088",
-					changeOrigin: true,
-					secure: false
-				},
-				// 粉丝管理相关接口
-				"/fans": {
-					target: "http://106.54.6.213:8088",
-					changeOrigin: true,
-					secure: false
-				},
-				// 消息管理相关接口
-				"/msg": {
 					target: "http://106.54.6.213:8088",
 					changeOrigin: true,
 					secure: false
