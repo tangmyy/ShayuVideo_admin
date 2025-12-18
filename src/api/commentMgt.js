@@ -24,4 +24,23 @@ export const getCommentAdminList = (params = {}) => {
 	});
 };
 
+/**
+ * 管理端：修改评论信息
+ * 后端接口：/comment/admin/update（预留）
+ *
+ * @param {Object} updatedCommentBO - 评论信息对象
+ * @param {String} updatedCommentBO.commentId - 评论ID（必需）
+ * @param {String} updatedCommentBO.content - 评论内容（可选）
+ * @param {String} updatedCommentBO.fatherCommentId - 父评论ID（可选）
+ * @param {Number} updatedCommentBO.isLike - 是否点赞：1-已点赞，0-未点赞（可选）
+ * @returns {Promise} 返回修改后的评论信息
+ */
+export const updateCommentInfo = (updatedCommentBO) => {
+	return service({
+		method: "POST",
+		url: "/comment/admin/update",
+		data: updatedCommentBO
+	});
+};
+
 
