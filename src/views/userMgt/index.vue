@@ -84,10 +84,10 @@
 					<el-input v-model="editForm.nickname" placeholder="请输入昵称" clearable />
 				</el-form-item>
 				<el-form-item label="手机号" prop="mobile">
-					<el-input v-model="editForm.mobile" placeholder="请输入手机号" clearable />
+					<el-input v-model="editForm.mobile" placeholder="手机号（不支持修改）" disabled />
 				</el-form-item>
-				<el-form-item label="头像URL" prop="face">
-					<el-input v-model="editForm.face" placeholder="请输入头像URL" clearable />
+				<el-form-item label="头像" prop="face">
+					<el-input v-model="editForm.face" placeholder="头像URL（仅显示，需通过文件上传功能修改）" disabled />
 					<el-image
 						v-if="editForm.face"
 						:src="editForm.face"
@@ -95,6 +95,7 @@
 						fit="cover"
 						:preview-src-list="[editForm.face]"
 					/>
+					<div style="font-size: 12px; color: #999; margin-top: 5px">提示：头像需通过文件上传功能修改</div>
 				</el-form-item>
 				<el-form-item label="性别" prop="sex">
 					<el-select v-model="editForm.sex" placeholder="请选择性别" clearable style="width: 100%">
@@ -128,8 +129,8 @@
 				<el-form-item label="个人简介" prop="description">
 					<el-input v-model="editForm.description" type="textarea" :rows="3" placeholder="请输入个人简介" clearable />
 				</el-form-item>
-				<el-form-item label="背景图URL" prop="bgImg">
-					<el-input v-model="editForm.bgImg" placeholder="请输入背景图URL" clearable />
+				<el-form-item label="背景图" prop="bgImg">
+					<el-input v-model="editForm.bgImg" placeholder="背景图URL（仅显示，需通过文件上传功能修改）" disabled />
 					<el-image
 						v-if="editForm.bgImg"
 						:src="editForm.bgImg"
@@ -137,6 +138,7 @@
 						fit="cover"
 						:preview-src-list="[editForm.bgImg]"
 					/>
+					<div style="font-size: 12px; color: #999; margin-top: 5px">提示：背景图需通过文件上传功能修改</div>
 				</el-form-item>
 			</el-form>
 			<template #footer>
@@ -173,6 +175,16 @@ import { onMounted, ref, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getUserList, updateUserInfo } from "@/api/userMgt";
 import { useTable } from "@/utils/tableMethod";
+
+// UserInfoModifyType 枚举值
+const MODIFY_TYPE = {
+	NICKNAME: 1, // 昵称
+	VIDEONUM: 2, // 视频号
+	SEX: 3, // 性别
+	BIRTHDAY: 4, // 生日
+	LOCATION: 5, // 所在地
+	DESC: 6 // 简介
+};
 
 const { params, tableTotal, tableData, tableLoading, handleSearch, handleReset, handleSizeChange, handleCurrentChange } =
 	useTable({
@@ -213,6 +225,9 @@ const editFormRules = {
 	id: [{ required: true, message: "用户ID不能为空", trigger: "blur" }]
 };
 
+// 保存原始数据，用于比较是否有修改
+const originalData = reactive({});
+
 // 打开编辑对话框
 const handleEdit = row => {
 	// 填充表单数据
@@ -228,6 +243,18 @@ const handleEdit = row => {
 	editForm.district = row.district || "";
 	editForm.description = row.description || "";
 	editForm.bgImg = row.bgImg || "";
+
+	// 保存原始数据用于比较
+	originalData.id = row.id || "";
+	originalData.nickname = row.nickname || "";
+	originalData.sex = row.sex;
+	originalData.birthday = row.birthday ? new Date(row.birthday).toISOString().split("T")[0] : "";
+	originalData.country = row.country || "";
+	originalData.province = row.province || "";
+	originalData.city = row.city || "";
+	originalData.district = row.district || "";
+	originalData.description = row.description || "";
+
 	dialogVisible.value = true;
 };
 
@@ -245,32 +272,98 @@ const handleSubmit = async () => {
 
 		submitLoading.value = true;
 
-		// 构建提交数据，只包含有值的字段
-		const submitData = {
-			id: editForm.id
-		};
+		// 检查哪些字段被修改了，并根据类型分组
+		const updateTasks = [];
 
-		if (editForm.nickname) submitData.nickname = editForm.nickname;
-		if (editForm.mobile) submitData.mobile = editForm.mobile;
-		if (editForm.face) submitData.face = editForm.face;
-		if (editForm.sex !== undefined && editForm.sex !== null) submitData.sex = editForm.sex;
-		if (editForm.birthday) submitData.birthday = editForm.birthday;
-		if (editForm.country) submitData.country = editForm.country;
-		if (editForm.province) submitData.province = editForm.province;
-		if (editForm.city) submitData.city = editForm.city;
-		if (editForm.district) submitData.district = editForm.district;
-		if (editForm.description) submitData.description = editForm.description;
-		if (editForm.bgImg) submitData.bgImg = editForm.bgImg;
+		// 1. 检查昵称是否修改 (type=1)
+		if (editForm.nickname !== originalData.nickname && editForm.nickname) {
+			updateTasks.push({
+				type: MODIFY_TYPE.NICKNAME,
+				data: { id: editForm.id, nickname: editForm.nickname }
+			});
+		}
 
-		const res = await updateUserInfo(submitData);
+		// 2. 检查性别是否修改 (type=3)
+		if (editForm.sex !== originalData.sex && editForm.sex !== undefined && editForm.sex !== null) {
+			updateTasks.push({
+				type: MODIFY_TYPE.SEX,
+				data: { id: editForm.id, sex: editForm.sex }
+			});
+		}
 
-		if (res.data && res.data.success) {
-			ElMessage.success("修改成功");
+		// 3. 检查生日是否修改 (type=4)
+		if (editForm.birthday !== originalData.birthday && editForm.birthday) {
+			updateTasks.push({
+				type: MODIFY_TYPE.BIRTHDAY,
+				data: { id: editForm.id, birthday: editForm.birthday }
+			});
+		}
+
+		// 4. 检查所在地是否修改 (type=5) - country/province/city/district 任意一个改变都算
+		const locationChanged =
+			editForm.country !== originalData.country ||
+			editForm.province !== originalData.province ||
+			editForm.city !== originalData.city ||
+			editForm.district !== originalData.district;
+
+		if (locationChanged) {
+			const locationData = { id: editForm.id };
+			if (editForm.country) locationData.country = editForm.country;
+			if (editForm.province) locationData.province = editForm.province;
+			if (editForm.city) locationData.city = editForm.city;
+			if (editForm.district) locationData.district = editForm.district;
+			updateTasks.push({
+				type: MODIFY_TYPE.LOCATION,
+				data: locationData
+			});
+		}
+
+		// 5. 检查简介是否修改 (type=6)
+		if (editForm.description !== originalData.description && editForm.description) {
+			updateTasks.push({
+				type: MODIFY_TYPE.DESC,
+				data: { id: editForm.id, description: editForm.description }
+			});
+		}
+
+		// 如果没有需要更新的字段
+		if (updateTasks.length === 0) {
+			ElMessage.warning("没有需要修改的内容");
+			submitLoading.value = false;
+			return;
+		}
+
+		// 依次执行所有更新任务
+		let successCount = 0;
+		let failCount = 0;
+
+		for (const task of updateTasks) {
+			try {
+				const res = await updateUserInfo(task.data, task.type);
+				if (res.data && res.data.success) {
+					successCount++;
+				} else {
+					failCount++;
+					console.error(`修改失败 (type=${task.type}):`, res.data?.msg || "未知错误");
+				}
+			} catch (error) {
+				failCount++;
+				console.error(`修改失败 (type=${task.type}):`, error);
+			}
+		}
+
+		// 显示结果
+		if (failCount === 0) {
+			ElMessage.success(`修改成功（共 ${successCount} 项）`);
 			dialogVisible.value = false;
 			// 刷新列表
 			handleSearch();
+		} else if (successCount > 0) {
+			ElMessage.warning(`部分修改成功（成功 ${successCount} 项，失败 ${failCount} 项）`);
+			// 即使部分失败也刷新列表
+			handleSearch();
 		} else {
-			ElMessage.error(res.data?.msg || "修改失败");
+			ElMessage.error("修改失败，请稍后重试");
 		}
 	} catch (error) {
 		console.error("修改用户信息失败:", error);

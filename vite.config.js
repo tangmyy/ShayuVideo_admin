@@ -43,8 +43,8 @@ export default defineConfig(({ mode }) => {
 			cors: true,
 			// 跨域代理配置
 			proxy: {
-				// 用户管理相关接口
-				"/userInfo": {
+				// 管理后台统一接口（优先级最高，放在最前面）
+				"/admin": {
 					target: "http://106.54.6.213:8088",
 					changeOrigin: true,
 					secure: false
