@@ -86,3 +86,19 @@ export const modifyUserImage = (userId, type, file) => {
 	});
 };
 
+/**
+ * 管理端：删除用户（逻辑删除）
+ * 后端接口：/admin/users/delete
+ * @param {String} userId - 用户ID（必需）
+ * @returns {Promise} 返回删除结果
+ */
+export const deleteUser = (userId) => {
+	return service({
+		method: "POST",
+		url: "/admin/users/delete",
+		params: {
+			userId: userId
+		}
+	});
+};
+
