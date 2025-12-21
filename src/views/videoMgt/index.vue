@@ -191,19 +191,37 @@ const handleSubmit = async () => {
 
 		submitLoading.value = true;
 
-		// 构建提交数据，只包含有值的字段
+		// 构建提交数据，后端需要 id 字段（不是 vlogId）
+		// 根据后端 VlogBO，需要传入 id 字段
 		const submitData = {
-			vlogId: editForm.vlogId
+			id: editForm.vlogId // 将 vlogId 转换为 id 提交给后端
 		};
 
-		if (editForm.content) submitData.content = editForm.content;
-		if (editForm.cover) submitData.cover = editForm.cover;
-		if (editForm.url) submitData.url = editForm.url;
-		if (editForm.width !== undefined && editForm.width !== null) submitData.width = editForm.width;
-		if (editForm.height !== undefined && editForm.height !== null) submitData.height = editForm.height;
-		if (editForm.isPrivate !== undefined && editForm.isPrivate !== null) submitData.isPrivate = editForm.isPrivate;
+		// 只添加有值的字段，后端会使用 BeanUtils.copyProperties 复制属性
+		// 注意：Vlog POJO 中使用的是 title 字段，不是 content
+		if (editForm.content !== undefined && editForm.content !== null && editForm.content !== "") {
+			submitData.title = editForm.content; // 前端使用 content，后端 Vlog 使用 title
+		}
+		if (editForm.cover !== undefined && editForm.cover !== null && editForm.cover !== "") {
+			submitData.cover = editForm.cover;
+		}
+		if (editForm.url !== undefined && editForm.url !== null && editForm.url !== "") {
+			submitData.url = editForm.url;
+		}
+		if (editForm.width !== undefined && editForm.width !== null) {
+			submitData.width = editForm.width;
+		}
+		if (editForm.height !== undefined && editForm.height !== null) {
+			submitData.height = editForm.height;
+		}
+		if (editForm.isPrivate !== undefined && editForm.isPrivate !== null) {
+			submitData.isPrivate = editForm.isPrivate;
+		}
 
+		console.log("【视频编辑】提交数据:", submitData);
 		const res = await updateVlogInfo(submitData);
+		console.log("【视频编辑】完整响应:", res);
+		console.log("【视频编辑】响应数据:", res.data);
 
 		if (res.data && res.data.success) {
 			ElMessage.success("编辑成功");
@@ -211,11 +229,16 @@ const handleSubmit = async () => {
 			// 刷新列表
 			handleSearch();
 		} else {
-			ElMessage.error(res.data?.msg || "编辑失败");
+			const errorMsg = res.data?.msg || res.data?.message || "编辑失败";
+			console.error("【视频编辑】编辑失败:", errorMsg, res.data);
+			ElMessage.error(errorMsg);
 		}
 	} catch (error) {
-		console.error("编辑视频信息失败:", error);
-		ElMessage.error(error.response?.data?.msg || "编辑失败，请稍后重试");
+		console.error("【视频编辑】编辑视频信息异常:", error);
+		console.error("【视频编辑】错误响应:", error.response);
+		console.error("【视频编辑】错误数据:", error.response?.data);
+		const errorMsg = error.response?.data?.msg || error.response?.data?.message || error.message || "编辑失败，请稍后重试";
+		ElMessage.error(errorMsg);
 	} finally {
 		submitLoading.value = false;
 	}

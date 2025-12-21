@@ -24,22 +24,24 @@ export const getVlogAdminList = (params = {}) => {
 
 /**
  * 管理端：修改视频信息
- * 后端接口：/admin/vlog/update（预留）
+ * 后端接口：/admin/vlog/update
+ * 后端方法：updateVlog(VlogBO vlogBO)
  *
- * @param {Object} updatedVlogBO - 视频信息对象
- * @param {String} updatedVlogBO.vlogId - 视频ID（必需）
- * @param {String} updatedVlogBO.content - 标题/文案（可选）
- * @param {String} updatedVlogBO.cover - 封面URL（可选）
- * @param {String} updatedVlogBO.url - 播放地址（可选）
- * @param {Number} updatedVlogBO.width - 宽度（可选）
- * @param {Number} updatedVlogBO.height - 高度（可选）
- * @param {Number} updatedVlogBO.isPrivate - 权限：1-私密，0-公开（可选）
- * @returns {Promise} 返回修改后的视频信息
+ * @param {Object} vlogBO - 视频信息对象（对应后端 VlogBO）
+ * @param {String} vlogBO.id - 视频ID（必需，后端会检查是否为空）
+ * @param {String} vlogBO.title - 标题/文案（可选，注意：前端使用 content，提交时需要转换为 title）
+ * @param {String} vlogBO.cover - 封面URL（可选）
+ * @param {String} vlogBO.url - 播放地址（可选）
+ * @param {Number} vlogBO.width - 宽度（可选）
+ * @param {Number} vlogBO.height - 高度（可选）
+ * @param {Number} vlogBO.isPrivate - 权限：1-私密，0-公开（可选）
+ * @returns {Promise} 返回修改结果
+ * @note 后端会自动排除 createdTime、likeCounts、commentsCounts 等字段，并自动更新 updatedTime
  */
-export const updateVlogInfo = (updatedVlogBO) => {
+export const updateVlogInfo = (vlogBO) => {
 	return service({
 		method: "POST",
-		url: "/admin/vlog/update",
-		data: updatedVlogBO
+		url: "/admin/vlog/updateInfo",
+		data: vlogBO
 	});
 };
