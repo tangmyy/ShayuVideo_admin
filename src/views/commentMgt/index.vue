@@ -1,67 +1,83 @@
 <template>
 	<div class="card">
-		<el-form :inline="true" :model="params" class="demo-form-inline">
-			<el-form-item label="视频ID">
-				<el-input v-model="params.vlogId" placeholder="请输入要查看评论的 视频ID" clearable />
-			</el-form-item>
-			<el-form-item label="评论用户ID(可选)">
-				<el-input v-model="params.userId" placeholder="可选：当前登录用户ID" clearable />
-			</el-form-item>
-			<el-form-item>
-				<el-button type="primary" @click="handleSearch()">搜索</el-button>
-				<el-button type="info" @click="handleReset()">清空</el-button>
-			</el-form-item>
-		</el-form>
+	<el-form :inline="true" :model="params" class="demo-form-inline">
+		<el-form-item label="视频ID">
+			<el-input v-model="params.vlogId" placeholder="请输入视频ID（留空则查询所有评论）" clearable />
+		</el-form-item>
+		<el-form-item label="评论者ID">
+			<el-input v-model="params.userId" placeholder="请输入评论者ID（留空则不按用户筛选）" clearable />
+		</el-form-item>
+		<el-form-item>
+			<el-button type="primary" @click="handleSearch()">搜索</el-button>
+			<el-button type="info" @click="handleReset()">清空</el-button>
+		</el-form-item>
+	</el-form>
 
-		<el-alert v-if="!params.vlogId" type="warning" show-icon title="请先输入视频ID后再搜索评论列表" style="margin-bottom: 10px" />
+	<el-alert v-if="!params.vlogId && !params.userId" type="info" show-icon title="未输入筛选条件，将查询所有评论" style="margin-bottom: 10px" />
 
-		<div class="table-wrapper">
-			<el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
-				<el-table-column prop="commentId" label="评论ID" width="180" />
-				<el-table-column prop="vlogId" label="视频ID" width="180" />
-				<el-table-column prop="fatherCommentId" label="父评论ID" width="180" show-overflow-tooltip />
+	<div class="table-wrapper">
+		<el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
+			<!-- 使用 CommentAdminVO 的字段 -->
+			<el-table-column prop="id" label="评论ID" width="180" show-overflow-tooltip />
 
-				<el-table-column prop="commentUserNickname" label="评论用户" width="150" show-overflow-tooltip />
+			<el-table-column prop="vlogId" label="视频ID" width="180" show-overflow-tooltip />
 
-				<el-table-column prop="commentUserFace" label="用户头像" width="110">
-					<template #default="{ row }">
-						<el-image
-							v-if="row.commentUserFace"
-							:src="row.commentUserFace"
-							style="width: 50px; height: 50px; border-radius: 50%"
-							fit="cover"
-							:preview-src-list="[row.commentUserFace]"
-						/>
-						<span v-else>无头像</span>
-					</template>
-				</el-table-column>
+			<el-table-column prop="vlogTitle" label="视频标题" width="200" show-overflow-tooltip />
 
-				<el-table-column prop="content" label="评论内容" min-width="260" show-overflow-tooltip />
+			<el-table-column prop="vlogerId" label="视频作者ID" width="180" show-overflow-tooltip />
 
-				<el-table-column prop="replyedUserNickname" label="被回复用户" width="150" show-overflow-tooltip />
+			<el-table-column prop="vlogerNickname" label="视频作者昵称" width="150" show-overflow-tooltip />
 
-				<el-table-column prop="likeCounts" label="点赞数" width="90" />
+			<el-table-column prop="vlogerFace" label="视频作者头像" width="120">
+				<template #default="{ row }">
+					<el-image
+						v-if="row.vlogerFace"
+						:src="row.vlogerFace"
+						style="width: 50px; height: 50px; border-radius: 50%"
+						fit="cover"
+						:preview-src-list="[row.vlogerFace]"
+					/>
+					<span v-else>无头像</span>
+				</template>
+			</el-table-column>
 
-				<el-table-column prop="isLike" label="是否点赞" width="100">
-					<template #default="{ row }">
-						<el-tag :type="row.isLike === 1 ? 'success' : 'info'">
-							{{ row.isLike === 1 ? "已点赞" : "未点赞" }}
-						</el-tag>
-					</template>
-				</el-table-column>
+			<el-table-column prop="commentUserId" label="评论者ID" width="180" show-overflow-tooltip />
 
-				<el-table-column prop="createTime" label="创建时间" width="190">
-					<template #default="{ row }">
-						<span>{{ row.createTime ? new Date(row.createTime).toLocaleString() : "-" }}</span>
-					</template>
-				</el-table-column>
-				<el-table-column label="操作" width="120" fixed="right">
-					<template #default="{ row }">
-						<el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-					</template>
-				</el-table-column>
-			</el-table>
-		</div>
+			<el-table-column prop="commentUserNickname" label="评论者昵称" width="150" show-overflow-tooltip />
+
+			<el-table-column prop="commentUserFace" label="评论者头像" width="120">
+				<template #default="{ row }">
+					<el-image
+						v-if="row.commentUserFace"
+						:src="row.commentUserFace"
+						style="width: 50px; height: 50px; border-radius: 50%"
+						fit="cover"
+						:preview-src-list="[row.commentUserFace]"
+					/>
+					<span v-else>无头像</span>
+				</template>
+			</el-table-column>
+
+			<el-table-column prop="fatherCommentId" label="父评论ID" width="180" show-overflow-tooltip />
+
+			<el-table-column prop="content" label="评论内容" min-width="260" show-overflow-tooltip />
+
+			<el-table-column prop="replyedUserNickname" label="被回复用户昵称" width="150" show-overflow-tooltip />
+
+			<el-table-column prop="likeCounts" label="点赞数" width="90" />
+
+			<el-table-column prop="createTime" label="创建时间" width="190">
+				<template #default="{ row }">
+					<span>{{ row.createTime ? new Date(row.createTime).toLocaleString() : "-" }}</span>
+				</template>
+			</el-table-column>
+			<el-table-column label="操作" width="120" fixed="right">
+				<template #default="{ row }">
+					<el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+				</template>
+			</el-table-column>
+		</el-table>
+	</div>
 
 		<!-- 编辑评论对话框 -->
 		<el-dialog v-model="dialogVisible" title="修改评论信息" width="600px" :close-on-click-modal="false">
@@ -78,12 +94,13 @@
 				<el-form-item label="父评论ID" prop="fatherCommentId">
 					<el-input v-model="editForm.fatherCommentId" placeholder="请输入父评论ID（留空表示顶级评论）" clearable />
 				</el-form-item>
-				<el-form-item label="是否点赞" prop="isLike">
+				<!-- 注意：新的 CommentAdminVO 中没有 isLike 字段，如果需要编辑点赞状态，可能需要单独处理 -->
+				<!-- <el-form-item label="是否点赞" prop="isLike">
 					<el-select v-model="editForm.isLike" placeholder="请选择是否点赞" clearable style="width: 100%">
 						<el-option label="未点赞" :value="0" />
 						<el-option label="已点赞" :value="1" />
 					</el-select>
-				</el-form-item>
+				</el-form-item> -->
 			</el-form>
 			<template #footer>
 				<el-button @click="dialogVisible = false">取消</el-button>
@@ -131,21 +148,16 @@ const {
 		tableDataKey: "data.rows", // 从 res.data 开始取列表
 		totalKey: "data.records", // 从 res.data 开始取总记录数
 		params: {
-			vlogId: "", // 必填：需要你在页面上输入某个视频ID
-			userId: "", // 可选：当前登录用户ID（管理端可以留空）
+			vlogId: "", // 可选：如果为空则不按视频筛选
+			userId: "", // 可选：评论者ID，如果为空则不按用户筛选
 			page: 1,
 			pageSize: 10
 		}
 	}
 });
 
-// 包一层，防止 vlogId 为空时直接请求报错
+// 直接使用 baseHandleSearch，vlogId 和 userId 都为空时也可以查询所有评论
 const handleSearch = () => {
-	// params 是一个 ref，在脚本中需要通过 params.value 访问
-	if (!params.value.vlogId) {
-		ElMessage.warning("请先输入视频ID");
-		return;
-	}
 	baseHandleSearch();
 };
 
@@ -154,11 +166,12 @@ const dialogVisible = ref(false);
 const editFormRef = ref();
 const submitLoading = ref(false);
 const editForm = reactive({
-	commentId: "",
+	commentId: "", // 对应 CommentAdminVO 的 id 字段
 	vlogId: "",
 	content: "",
-	fatherCommentId: "",
-	isLike: undefined
+	fatherCommentId: ""
+	// 注意：新的 CommentAdminVO 中没有 isLike 字段
+	// isLike: undefined
 });
 
 // 表单验证规则
@@ -168,12 +181,13 @@ const editFormRules = {
 
 // 打开编辑对话框
 const handleEdit = row => {
-	// 填充表单数据
-	editForm.commentId = row.commentId || "";
+	// 填充表单数据，使用新的 CommentAdminVO 字段名
+	editForm.commentId = row.id || ""; // CommentAdminVO 使用 id 字段
 	editForm.vlogId = row.vlogId || "";
 	editForm.content = row.content || "";
 	editForm.fatherCommentId = row.fatherCommentId || "";
-	editForm.isLike = row.isLike !== undefined && row.isLike !== null ? row.isLike : undefined;
+	// 注意：新的 CommentAdminVO 中没有 isLike 字段，如果需要编辑点赞状态，可能需要单独处理
+	// editForm.isLike = row.isLike !== undefined && row.isLike !== null ? row.isLike : undefined;
 	dialogVisible.value = true;
 };
 
@@ -193,12 +207,17 @@ const handleSubmit = async () => {
 
 		// 构建提交数据，只包含有值的字段
 		const submitData = {
-			commentId: editForm.commentId
+			commentId: editForm.commentId // 或者使用 id，取决于后端接口要求
 		};
 
-		if (editForm.content) submitData.content = editForm.content;
-		if (editForm.fatherCommentId) submitData.fatherCommentId = editForm.fatherCommentId;
-		if (editForm.isLike !== undefined && editForm.isLike !== null) submitData.isLike = editForm.isLike;
+		if (editForm.content !== undefined && editForm.content !== null && editForm.content !== "") {
+			submitData.content = editForm.content;
+		}
+		if (editForm.fatherCommentId !== undefined && editForm.fatherCommentId !== null && editForm.fatherCommentId !== "") {
+			submitData.fatherCommentId = editForm.fatherCommentId;
+		}
+		// 注意：新的 CommentAdminVO 中没有 isLike 字段，如果需要编辑点赞状态，可能需要单独处理
+		// if (editForm.isLike !== undefined && editForm.isLike !== null) submitData.isLike = editForm.isLike;
 
 		const res = await updateCommentInfo(submitData);
 
@@ -219,10 +238,8 @@ const handleSubmit = async () => {
 };
 
 onMounted(() => {
-	// 默认不自动查询，避免 vlogId 为空
-	// 如果你想默认查询某个视频，可以在这里给 params.vlogId 赋值后再调用 handleSearch()
-	// params.vlogId = "某个视频ID";
-	// handleSearch();
+	// 可以自动查询所有评论（因为 vlogId 和 userId 都是可选参数）
+	handleSearch();
 });
 </script>
 <style scoped>

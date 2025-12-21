@@ -5,19 +5,19 @@ import service from "@/utils/service.js";
  * 后端接口：/admin/comment/list
  *
  * @param {Object} params - 查询参数
- * @param {String} params.vlogId - 视频ID（必填）
- * @param {String} [params.userId] - 当前登录用户ID（可选，管理端可不传）
+ * @param {String} [params.vlogId] - 视频ID（可选，如果为空则不按视频筛选）
+ * @param {String} [params.userId] - 评论者ID（可选，如果为空则不按用户筛选）
  * @param {Number} [params.page] - 页码（默认 1）
  * @param {Number} [params.pageSize] - 每页数量（默认 10）
- * @returns {Promise} 返回评论列表分页数据
+ * @returns {Promise} 返回评论列表分页数据（CommentAdminVO 数组）
  */
 export const getCommentAdminList = (params = {}) => {
 	return service({
 		method: "GET",
 		url: "/admin/comment/list",
 		params: {
-			vlogId: params.vlogId,
-			userId: params.userId || "",
+			vlogId: params.vlogId || undefined, // 可选参数，为空时不传
+			userId: params.userId || undefined, // 可选参数，为空时不传
 			page: params.page || 1,
 			pageSize: params.pageSize || 10
 		}
