@@ -87,15 +87,35 @@ export const modifyUserImage = (userId, type, file) => {
 };
 
 /**
- * 管理端：删除用户（逻辑删除）
- * 后端接口：/admin/users/delete
+ * 管理端：删除/恢复用户（切换逻辑删除状态）
+ * 后端接口：/admin/users/deleteOrRestore
+ * 如果用户是正常状态（is_deleted = 0），则逻辑删除（设置为 1）
+ * 如果用户是已逻辑删除状态（is_deleted = 1），则恢复（设置为 0）
  * @param {String} userId - 用户ID（必需）
- * @returns {Promise} 返回删除结果
+ * @returns {Promise} 返回更新后的用户信息
  */
-export const deleteUser = (userId) => {
+export const deleteOrRestoreUser = (userId) => {
 	return service({
 		method: "POST",
-		url: "/admin/users/delete",
+		url: "/admin/users/deleteOrRestore",
+		params: {
+			userId: userId
+		}
+	});
+};
+
+/**
+ * 管理端：封禁/恢复用户（切换用户状态）
+ * 后端接口：/admin/users/banOrRestore
+ * 如果用户是正常状态（status = 0），则封禁（设置为 1）
+ * 如果用户是封禁状态（status = 1），则恢复（设置为 0）
+ * @param {String} userId - 用户ID（必需）
+ * @returns {Promise} 返回更新后的用户信息
+ */
+export const banOrRestoreUser = (userId) => {
+	return service({
+		method: "POST",
+		url: "/admin/users/banOrRestore",
 		params: {
 			userId: userId
 		}

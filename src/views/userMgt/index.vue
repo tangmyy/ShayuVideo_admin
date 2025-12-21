@@ -74,10 +74,10 @@
 						<span>{{ row.updatedTime ? new Date(row.updatedTime).toLocaleString() : "-" }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="isBanned" label="封禁状态" width="100">
+				<el-table-column prop="status" label="封禁状态" width="100">
 					<template #default="{ row }">
-						<el-tag :type="row.isBanned === 1 ? 'warning' : 'success'">
-							{{ row.isBanned === 1 ? "已封禁" : "正常" }}
+						<el-tag :type="row.status === 1 ? 'warning' : 'success'">
+							{{ row.status === 1 ? "已封禁" : "正常" }}
 						</el-tag>
 					</template>
 				</el-table-column>
@@ -88,9 +88,45 @@
 						</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" width="120" fixed="right">
+				<el-table-column label="操作" width="280" fixed="right">
 					<template #default="{ row }">
 						<el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+						<el-button
+							v-if="row.status !== 1"
+							type="warning"
+							size="small"
+							:loading="banOrRestoreLoadingMap[row.id]"
+							@click="handleBanOrRestoreUser(row)"
+						>
+							封禁
+						</el-button>
+						<el-button
+							v-if="row.status === 1"
+							type="success"
+							size="small"
+							:loading="banOrRestoreLoadingMap[row.id]"
+							@click="handleBanOrRestoreUser(row)"
+						>
+							解封
+						</el-button>
+						<el-button
+							v-if="row.isDeleted !== 1"
+							type="danger"
+							size="small"
+							:loading="deleteOrRestoreLoadingMap[row.id]"
+							@click="handleDeleteOrRestoreUser(row)"
+						>
+							删除
+						</el-button>
+						<el-button
+							v-if="row.isDeleted === 1"
+							type="success"
+							size="small"
+							:loading="deleteOrRestoreLoadingMap[row.id]"
+							@click="handleDeleteOrRestoreUser(row)"
+						>
+							恢复
+						</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -172,22 +208,6 @@
 					/>
 					<div style="font-size: 12px; color: #999; margin-top: 5px">提示：背景图需通过文件上传功能编辑</div>
 				</el-form-item>
-				<el-form-item label="状态管理">
-					<div style="display: flex; gap: 10px; flex-wrap: wrap">
-						<el-button v-if="editForm.isDeleted !== 1" type="danger" :loading="deleteLoading" @click="handleDeleteUser">
-							删除用户
-						</el-button>
-						<el-button v-if="editForm.isDeleted === 1" type="success" :loading="restoreLoading" @click="handleRestoreUser">
-							恢复用户
-						</el-button>
-						<el-button v-if="editForm.isBanned !== 1" type="warning" :loading="banLoading" @click="handleBanUser">
-							封禁用户
-						</el-button>
-						<el-button v-if="editForm.isBanned === 1" type="success" :loading="unbanLoading" @click="handleUnbanUser">
-							解封用户
-						</el-button>
-					</div>
-				</el-form-item>
 			</el-form>
 			<template #footer>
 				<el-button @click="dialogVisible = false">取消</el-button>
@@ -221,7 +241,7 @@
 <script setup name="userMgt">
 import { onMounted, ref, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getUserList, updateUserInfo, deleteUser } from "@/api/userMgt";
+import { getUserList, updateUserInfo, deleteOrRestoreUser, banOrRestoreUser } from "@/api/userMgt";
 import { useTable } from "@/utils/tableMethod";
 
 // UserInfoModifyType 枚举值
@@ -253,10 +273,9 @@ const { params, tableTotal, tableData, tableLoading, handleSearch, handleReset, 
 const dialogVisible = ref(false);
 const editFormRef = ref();
 const submitLoading = ref(false);
-const deleteLoading = ref(false);
-const restoreLoading = ref(false);
-const banLoading = ref(false);
-const unbanLoading = ref(false);
+// 使用 Map 来管理每个用户的 loading 状态
+const deleteOrRestoreLoadingMap = ref({});
+const banOrRestoreLoadingMap = ref({});
 const editForm = reactive({
 	id: "",
 	nickname: "",
@@ -273,7 +292,7 @@ const editForm = reactive({
 	description: "",
 	bgImg: "",
 	isDeleted: undefined,
-	isBanned: undefined
+	status: undefined
 });
 
 // 表单验证规则
@@ -302,7 +321,7 @@ const handleEdit = row => {
 	editForm.description = row.description || "";
 	editForm.bgImg = row.bgImg || "";
 	editForm.isDeleted = row.isDeleted;
-	editForm.isBanned = row.isBanned;
+	editForm.status = row.status;
 
 	// 保存原始数据用于比较
 	originalData.id = row.id || "";
@@ -317,7 +336,7 @@ const handleEdit = row => {
 	originalData.district = row.district || "";
 	originalData.description = row.description || "";
 	originalData.isDeleted = row.isDeleted;
-	originalData.isBanned = row.isBanned;
+	originalData.status = row.status;
 
 	dialogVisible.value = true;
 };
@@ -451,142 +470,84 @@ const handleSubmit = async () => {
 	}
 };
 
-// 删除用户
-const handleDeleteUser = async () => {
-	if (!editForm.id) {
+// 删除/恢复用户（切换逻辑删除状态）
+const handleDeleteOrRestoreUser = async row => {
+	if (!row || !row.id) {
 		ElMessage.error("用户ID不能为空");
 		return;
 	}
 
+	const isCurrentlyDeleted = row.isDeleted === 1;
+	const actionText = isCurrentlyDeleted ? "恢复" : "删除";
+	const confirmText = isCurrentlyDeleted
+		? "确定要恢复该用户吗？恢复后用户将可以正常登录。"
+		: "确定要删除该用户吗？删除后用户将无法登录，但数据会保留。";
+
 	try {
-		await ElMessageBox.confirm("确定要删除该用户吗？删除后用户将无法登录，但数据会保留。", "确认删除", {
+		await ElMessageBox.confirm(confirmText, `确认${actionText}`, {
 			confirmButtonText: "确定",
 			cancelButtonText: "取消",
 			type: "warning"
 		});
 
-		deleteLoading.value = true;
-		const res = await deleteUser(editForm.id);
+		deleteOrRestoreLoadingMap.value[row.id] = true;
+		const res = await deleteOrRestoreUser(row.id);
 
 		if (res.data && res.data.success) {
-			ElMessage.success("删除成功");
-			// 更新表单状态
-			editForm.isDeleted = 1;
+			ElMessage.success(`${actionText}成功`);
 			// 刷新列表
 			handleSearch();
 		} else {
-			ElMessage.error(res.data?.msg || "删除失败");
+			ElMessage.error(res.data?.msg || `${actionText}失败`);
 		}
 	} catch (error) {
 		if (error !== "cancel") {
-			console.error("删除用户失败:", error);
-			ElMessage.error(error.response?.data?.msg || "删除失败，请稍后重试");
+			console.error(`${actionText}用户失败:`, error);
+			ElMessage.error(error.response?.data?.msg || `${actionText}失败，请稍后重试`);
 		}
 	} finally {
-		deleteLoading.value = false;
+		deleteOrRestoreLoadingMap.value[row.id] = false;
 	}
 };
 
-// 恢复用户（逻辑恢复，需要后端接口支持）
-const handleRestoreUser = async () => {
-	if (!editForm.id) {
+// 封禁/恢复用户（切换用户状态）
+const handleBanOrRestoreUser = async row => {
+	if (!row || !row.id) {
 		ElMessage.error("用户ID不能为空");
 		return;
 	}
 
+	// 使用 status 字段判断（0=正常，1=封禁）
+	const isCurrentlyBanned = row.status === 1;
+	const actionText = isCurrentlyBanned ? "解封" : "封禁";
+	const confirmText = isCurrentlyBanned
+		? "确定要解封该用户吗？解封后用户将可以正常发布视频、发表评论、被关注。"
+		: "确定要封禁该用户吗？封禁后用户将无法发布视频、发表评论、被关注。";
+
 	try {
-		await ElMessageBox.confirm("确定要恢复该用户吗？恢复后用户将可以正常登录。", "确认恢复", {
+		await ElMessageBox.confirm(confirmText, `确认${actionText}`, {
 			confirmButtonText: "确定",
 			cancelButtonText: "取消",
 			type: "warning"
 		});
 
-		restoreLoading.value = true;
-		// 注意：这里需要后端提供恢复用户的接口，暂时使用删除接口的相反操作
-		// 如果后端没有恢复接口，需要调用更新接口将 isDeleted 设置为 0
-		ElMessage.warning("恢复用户功能需要后端接口支持，请先实现恢复接口");
-		// TODO: 调用恢复用户接口
-		// const res = await restoreUser(editForm.id);
-		// if (res.data && res.data.success) {
-		//   ElMessage.success("恢复成功");
-		//   editForm.isDeleted = 0;
-		//   handleSearch();
-		// }
+		banOrRestoreLoadingMap.value[row.id] = true;
+		const res = await banOrRestoreUser(row.id);
+
+		if (res.data && res.data.success) {
+			ElMessage.success(`${actionText}成功`);
+			// 刷新列表以更新状态
+			handleSearch();
+		} else {
+			ElMessage.error(res.data?.msg || `${actionText}失败`);
+		}
 	} catch (error) {
 		if (error !== "cancel") {
-			console.error("恢复用户失败:", error);
-			ElMessage.error(error.response?.data?.msg || "恢复失败，请稍后重试");
+			console.error(`${actionText}用户失败:`, error);
+			ElMessage.error(error.response?.data?.msg || `${actionText}失败，请稍后重试`);
 		}
 	} finally {
-		restoreLoading.value = false;
-	}
-};
-
-// 封禁用户（需要后端接口支持）
-const handleBanUser = async () => {
-	if (!editForm.id) {
-		ElMessage.error("用户ID不能为空");
-		return;
-	}
-
-	try {
-		await ElMessageBox.confirm("确定要封禁该用户吗？封禁后用户将无法登录。", "确认封禁", {
-			confirmButtonText: "确定",
-			cancelButtonText: "取消",
-			type: "warning"
-		});
-
-		banLoading.value = true;
-		// 注意：这里需要后端提供封禁用户的接口
-		ElMessage.warning("封禁用户功能需要后端接口支持，请先实现封禁接口");
-		// TODO: 调用封禁用户接口
-		// const res = await banUser(editForm.id);
-		// if (res.data && res.data.success) {
-		//   ElMessage.success("封禁成功");
-		//   editForm.isBanned = 1;
-		//   handleSearch();
-		// }
-	} catch (error) {
-		if (error !== "cancel") {
-			console.error("封禁用户失败:", error);
-			ElMessage.error(error.response?.data?.msg || "封禁失败，请稍后重试");
-		}
-	} finally {
-		banLoading.value = false;
-	}
-};
-
-// 解封用户（需要后端接口支持）
-const handleUnbanUser = async () => {
-	if (!editForm.id) {
-		ElMessage.error("用户ID不能为空");
-		return;
-	}
-
-	try {
-		await ElMessageBox.confirm("确定要解封该用户吗？解封后用户将可以正常登录。", "确认解封", {
-			confirmButtonText: "确定",
-			cancelButtonText: "取消",
-			type: "warning"
-		});
-
-		unbanLoading.value = true;
-		// 注意：这里需要后端提供解封用户的接口
-		ElMessage.warning("解封用户功能需要后端接口支持，请先实现解封接口");
-		// TODO: 调用解封用户接口
-		// const res = await unbanUser(editForm.id);
-		// if (res.data && res.data.success) {
-		//   ElMessage.success("解封成功");
-		//   editForm.isBanned = 0;
-		//   handleSearch();
-		// }
-	} catch (error) {
-		if (error !== "cancel") {
-			console.error("解封用户失败:", error);
-			ElMessage.error(error.response?.data?.msg || "解封失败，请稍后重试");
-		}
-	} finally {
-		unbanLoading.value = false;
+		banOrRestoreLoadingMap.value[row.id] = false;
 	}
 };
 
