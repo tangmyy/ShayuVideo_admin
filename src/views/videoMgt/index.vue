@@ -66,7 +66,7 @@
 					</template>
 				</el-table-column>
 			</el-table>
-		</div>
+				</div>
 
 		<!-- 编辑视频对话框 -->
 		<el-dialog v-model="dialogVisible" title="编辑视频信息" width="600px" :close-on-click-modal="false">
@@ -120,7 +120,7 @@
 				:total="tableTotal"
 			>
 			</el-pagination>
-		</div>
+			</div>
 	</div>
 </template>
 
@@ -232,7 +232,7 @@ const handleSubmit = async () => {
 			const errorMsg = res.data?.msg || res.data?.message || "编辑失败";
 			console.error("【视频编辑】编辑失败:", errorMsg, res.data);
 			ElMessage.error(errorMsg);
-		}
+			}
 	} catch (error) {
 		console.error("【视频编辑】编辑视频信息异常:", error);
 		console.error("【视频编辑】错误响应:", error.response);

@@ -77,7 +77,7 @@
 				</template>
 			</el-table-column>
 		</el-table>
-	</div>
+				</div>
 
 		<!-- 编辑评论对话框 -->
 		<el-dialog v-model="dialogVisible" title="修改评论信息" width="600px" :close-on-click-modal="false">
@@ -122,7 +122,7 @@
 				:total="tableTotal"
 			>
 			</el-pagination>
-		</div>
+			</div>
 	</div>
 </template>
 
@@ -215,7 +215,7 @@ const handleSubmit = async () => {
 		}
 		if (editForm.fatherCommentId !== undefined && editForm.fatherCommentId !== null && editForm.fatherCommentId !== "") {
 			submitData.fatherCommentId = editForm.fatherCommentId;
-		}
+			}
 		// 注意：新的 CommentAdminVO 中没有 isLike 字段，如果需要编辑点赞状态，可能需要单独处理
 		// if (editForm.isLike !== undefined && editForm.isLike !== null) submitData.isLike = editForm.isLike;
 

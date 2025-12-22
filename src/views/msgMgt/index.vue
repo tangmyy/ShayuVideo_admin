@@ -12,9 +12,9 @@
 
 		<el-alert
 			v-if="!params.userId"
-			type="warning"
+			type="info"
 			show-icon
-			title="请先输入接收消息的用户ID后再搜索消息列表"
+			title="提示：不输入用户ID将查询所有消息"
 			style="margin-bottom: 10px"
 		/>
 
@@ -58,6 +58,19 @@
 					<span>{{ row.createTime ? new Date(row.createTime).toLocaleString() : "-" }}</span>
 				</template>
 			</el-table-column>
+
+			<el-table-column label="操作" width="120" fixed="right">
+				<template #default="{ row }">
+					<el-button
+						type="danger"
+						size="small"
+						:loading="deleteLoadingMap[row.id]"
+						@click="handleDelete(row)"
+					>
+						删除
+					</el-button>
+				</template>
+			</el-table-column>
 		</el-table>
 		</div>
 
@@ -80,9 +93,9 @@
 </template>
 
 <script setup name="msgMgt">
-import { onMounted } from "vue";
-import { ElMessage } from "element-plus";
-import { getMsgAdminList } from "@/api/msgMgt";
+import { onMounted, reactive } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { getMsgAdminList, deleteMsg } from "@/api/msgMgt";
 import { useTable } from "@/utils/tableMethod";
 
 // 包一层 API，加调试日志，方便确认是否有请求和返回什么数据
@@ -122,22 +135,55 @@ const {
 		tableDataKey: "data", // 从 res.data 开始取数组
 		totalKey: "data.length", // 用长度作为总数（后端返回的是数组）
 		params: {
-			userId: "", // 必填：接收消息的用户 ID
+			userId: "", // 可选：接收消息的用户 ID，为空则查询所有消息
 			page: 1, // 前端从 1 开始
 			pageSize: 10
 		}
 	}
 });
 
-// 包一层，防止 userId 为空时直接请求报错
+// 包一层，允许 userId 为空时查询所有消息
 const handleSearch = () => {
 	console.log("【msgMgt】当前查询参数 params.value:", params.value);
-	if (!params.value.userId) {
-		ElMessage.warning("请先输入接收消息的用户ID");
-		return;
-	}
 	console.log("【msgMgt】开始调用 baseHandleSearch");
 	baseHandleSearch();
+};
+
+// 每个消息删除操作的 loading 状态
+const deleteLoadingMap = reactive({});
+
+// 删除消息
+const handleDelete = async (row) => {
+	if (!row || !row.id) {
+		ElMessage.error("消息ID不能为空");
+		return;
+	}
+
+	try {
+		await ElMessageBox.confirm("确定要删除这条消息吗？删除后无法恢复。", "确认删除", {
+			confirmButtonText: "确定",
+			cancelButtonText: "取消",
+			type: "warning"
+		});
+
+		deleteLoadingMap[row.id] = true;
+		const res = await deleteMsg(row.id);
+
+		if (res.data && res.data.success) {
+			ElMessage.success("删除成功");
+			// 刷新列表
+			handleSearch();
+		} else {
+			ElMessage.error(res.data?.msg || "删除失败");
+		}
+	} catch (error) {
+		if (error !== "cancel") {
+			console.error("删除消息失败:", error);
+			ElMessage.error(error.response?.data?.msg || "删除失败，请稍后重试");
+		}
+	} finally {
+		deleteLoadingMap[row.id] = false;
+	}
 };
 
 // 格式化 msgContent（Map）为更易读的字符串
@@ -152,7 +198,8 @@ const formatMsgContent = content => {
 };
 
 onMounted(() => {
-	// 默认不自动查询，避免 userId 为空
+	// 自动查询所有消息（userId 为空时查询所有）
+	handleSearch();
 });
 </script>
 <style scoped>
