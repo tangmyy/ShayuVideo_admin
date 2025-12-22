@@ -43,4 +43,21 @@ export const updateCommentInfo = (updatedCommentBO) => {
 	});
 };
 
+/**
+ * 管理端：删除/恢复评论（切换逻辑删除状态）
+ * 后端接口：/admin/comment/deleteOrRestore
+ *
+ * @param {String} commentId - 评论ID（必填）
+ * @returns {Promise} 返回更新后的评论信息
+ */
+export const deleteOrRestoreComment = (commentId) => {
+	return service({
+		method: "POST",
+		url: "/admin/comment/deleteOrRestore",
+		params: {
+			commentId: commentId
+		}
+	});
+};
+
 

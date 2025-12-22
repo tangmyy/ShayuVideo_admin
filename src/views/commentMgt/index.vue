@@ -71,9 +71,34 @@
 					<span>{{ row.createTime ? new Date(row.createTime).toLocaleString() : "-" }}</span>
 				</template>
 			</el-table-column>
-			<el-table-column label="操作" width="120" fixed="right">
+			<el-table-column prop="isDeleted" label="删除状态" width="100">
+				<template #default="{ row }">
+					<el-tag :type="(row.isDeleted === 1 || row.isDeleted === '1') ? 'danger' : 'success'">
+						{{ (row.isDeleted === 1 || row.isDeleted === '1') ? "已删除" : "正常" }}
+					</el-tag>
+				</template>
+			</el-table-column>
+			<el-table-column label="操作" width="200" fixed="right">
 				<template #default="{ row }">
 					<el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+					<el-button
+						v-if="row.isDeleted !== 1 && row.isDeleted !== '1'"
+						type="danger"
+						size="small"
+						:loading="deleteOrRestoreLoadingMap[row.id]"
+						@click="handleDeleteOrRestoreComment(row)"
+					>
+						删除
+					</el-button>
+					<el-button
+						v-if="row.isDeleted === 1 || row.isDeleted === '1'"
+						type="success"
+						size="small"
+						:loading="deleteOrRestoreLoadingMap[row.id]"
+						@click="handleDeleteOrRestoreComment(row)"
+					>
+						恢复
+					</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -128,8 +153,8 @@
 
 <script setup name="commentMgt">
 import { onMounted, ref, reactive } from "vue";
-import { ElMessage } from "element-plus";
-import { getCommentAdminList, updateCommentInfo } from "@/api/commentMgt";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { getCommentAdminList, updateCommentInfo, deleteOrRestoreComment } from "@/api/commentMgt";
 import { useTable } from "@/utils/tableMethod";
 
 const {
@@ -152,6 +177,16 @@ const {
 			userId: "", // 可选：评论者ID，如果为空则不按用户筛选
 			page: 1,
 			pageSize: 10
+		}
+	},
+	response: {
+		handleResponseData: (list) => {
+			// 调试：打印第一条数据，检查 isDeleted 字段
+			if (list && list.length > 0) {
+				console.log("【评论管理】第一条数据示例:", list[0]);
+				console.log("【评论管理】isDeleted 字段值:", list[0].isDeleted, "类型:", typeof list[0].isDeleted);
+			}
+			return list;
 		}
 	}
 });
@@ -234,6 +269,50 @@ const handleSubmit = async () => {
 		ElMessage.error(error.response?.data?.msg || "修改失败，请稍后重试");
 	} finally {
 		submitLoading.value = false;
+	}
+};
+
+// 每个评论删除操作的 loading 状态
+const deleteOrRestoreLoadingMap = reactive({});
+
+// 删除/恢复评论（切换逻辑删除状态）
+const handleDeleteOrRestoreComment = async row => {
+	if (!row || !row.id) {
+		ElMessage.error("评论ID不能为空");
+		return;
+	}
+
+	// 处理 null/undefined 的情况，以及字符串 '1' 的情况
+	const isCurrentlyDeleted = row.isDeleted === 1 || row.isDeleted === '1';
+	const actionText = isCurrentlyDeleted ? "恢复" : "删除";
+	const confirmText = isCurrentlyDeleted
+		? "确定要恢复该评论吗？恢复后评论将可以正常显示。"
+		: "确定要删除该评论吗？删除后评论将无法显示，但数据会保留。";
+
+	try {
+		await ElMessageBox.confirm(confirmText, `确认${actionText}`, {
+			confirmButtonText: "确定",
+			cancelButtonText: "取消",
+			type: "warning"
+		});
+
+		deleteOrRestoreLoadingMap[row.id] = true;
+		const res = await deleteOrRestoreComment(row.id);
+
+		if (res.data && res.data.success) {
+			ElMessage.success(`${actionText}成功`);
+			// 刷新列表
+			handleSearch();
+		} else {
+			ElMessage.error(res.data?.msg || `${actionText}失败`);
+		}
+	} catch (error) {
+		if (error !== "cancel") {
+			console.error(`${actionText}评论失败:`, error);
+			ElMessage.error(error.response?.data?.msg || `${actionText}失败，请稍后重试`);
+		}
+	} finally {
+		deleteOrRestoreLoadingMap[row.id] = false;
 	}
 };
 

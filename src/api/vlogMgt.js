@@ -45,3 +45,20 @@ export const updateVlogInfo = (vlogBO) => {
 		data: vlogBO
 	});
 };
+
+/**
+ * 管理端：删除/恢复视频（切换逻辑删除状态）
+ * 后端接口：/admin/vlog/deleteOrRestore
+ *
+ * @param {String} vlogId - 视频ID（必填）
+ * @returns {Promise} 返回更新后的视频信息
+ */
+export const deleteOrRestoreVlog = (vlogId) => {
+	return service({
+		method: "POST",
+		url: "/admin/vlog/deleteOrRestore",
+		params: {
+			vlogId: vlogId
+		}
+	});
+};
