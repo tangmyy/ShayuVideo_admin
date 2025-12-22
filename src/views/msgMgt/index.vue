@@ -10,68 +10,57 @@
 			</el-form-item>
 		</el-form>
 
-		<el-alert
-			v-if="!params.userId"
-			type="info"
-			show-icon
-			title="提示：不输入用户ID将查询所有消息"
-			style="margin-bottom: 10px"
-		/>
+		<el-alert v-if="!params.userId" type="info" show-icon title="提示：不输入用户ID将查询所有消息" style="margin-bottom: 10px" />
 
 		<div class="table-wrapper">
 			<el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
-			<el-table-column prop="id" label="消息ID" width="220" show-overflow-tooltip />
+				<el-table-column prop="id" label="消息ID" width="220" show-overflow-tooltip />
 
-			<el-table-column prop="fromNickname" label="发送方昵称" width="160" show-overflow-tooltip />
+				<el-table-column prop="fromNickname" label="发送方昵称" width="160" show-overflow-tooltip />
 
-			<el-table-column prop="fromFace" label="发送方头像" width="120">
-				<template #default="{ row }">
-					<el-image
-						v-if="row.fromFace"
-						:src="row.fromFace"
-						style="width: 50px; height: 50px; border-radius: 50%"
-						fit="cover"
-						:preview-src-list="[row.fromFace]"
-					/>
-					<span v-else>无头像</span>
-				</template>
-			</el-table-column>
+				<el-table-column prop="fromFace" label="发送方头像" width="120">
+					<template #default="{ row }">
+						<el-image
+							v-if="row.fromFace"
+							:src="row.fromFace"
+							style="width: 50px; height: 50px; border-radius: 50%"
+							fit="cover"
+							:preview-src-list="[row.fromFace]"
+						/>
+						<span v-else>无头像</span>
+					</template>
+				</el-table-column>
 
-			<el-table-column prop="fromUserId" label="发送方ID" width="220" show-overflow-tooltip />
+				<el-table-column prop="fromUserId" label="发送方ID" width="220" show-overflow-tooltip />
 
-			<el-table-column prop="toUserId" label="接收方ID" width="220" show-overflow-tooltip />
+				<el-table-column prop="toUserId" label="接收方ID" width="220" show-overflow-tooltip />
 
-			<el-table-column prop="msgType" label="消息类型" width="120">
-				<template #default="{ row }">
-					<el-tag type="info">{{ row.msgType }}</el-tag>
-				</template>
-			</el-table-column>
+				<el-table-column prop="msgType" label="消息类型" width="120">
+					<template #default="{ row }">
+						<el-tag type="info">{{ row.msgType }}</el-tag>
+					</template>
+				</el-table-column>
 
-			<el-table-column prop="msgContent" label="消息内容" min-width="260">
-				<template #default="{ row }">
-					<pre style="margin: 0; white-space: pre-wrap">{{ formatMsgContent(row.msgContent) }}</pre>
-				</template>
-			</el-table-column>
+				<el-table-column prop="msgContent" label="消息内容" min-width="260">
+					<template #default="{ row }">
+						<pre style="margin: 0; white-space: pre-wrap">{{ formatMsgContent(row.msgContent) }}</pre>
+					</template>
+				</el-table-column>
 
-			<el-table-column prop="createTime" label="创建时间" width="190">
-				<template #default="{ row }">
-					<span>{{ row.createTime ? new Date(row.createTime).toLocaleString() : "-" }}</span>
-				</template>
-			</el-table-column>
+				<el-table-column prop="createTime" label="创建时间" width="190">
+					<template #default="{ row }">
+						<span>{{ row.createTime ? new Date(row.createTime).toLocaleString() : "-" }}</span>
+					</template>
+				</el-table-column>
 
-			<el-table-column label="操作" width="120" fixed="right">
-				<template #default="{ row }">
-					<el-button
-						type="danger"
-						size="small"
-						:loading="deleteLoadingMap[row.id]"
-						@click="handleDelete(row)"
-					>
-						删除
-					</el-button>
-				</template>
-			</el-table-column>
-		</el-table>
+				<el-table-column label="操作" width="120" fixed="right">
+					<template #default="{ row }">
+						<el-button type="danger" size="small" :loading="deleteLoadingMap[row.id]" @click="handleDelete(row)">
+							删除
+						</el-button>
+					</template>
+				</el-table-column>
+			</el-table>
 		</div>
 
 		<div style="display: flex; justify-content: flex-end; margin-top: 10px">
@@ -130,10 +119,10 @@ const {
 } = useTable({
 	request: {
 		api: getMsgAdminListWithDebug,
-		// /msg/admin/list 返回的是 list<MessageMO>
-		// axios res.data = { status, msg, success, data: [ ... ] }
-		tableDataKey: "data", // 从 res.data 开始取数组
-		totalKey: "data.length", // 用长度作为总数（后端返回的是数组）
+		// /admin/msg/list 返回的是 PagedGridResult
+		// axios res.data = { status, msg, success, data: { rows: [...], records: 30, page: 1, total: 3 } }
+		tableDataKey: "data.rows", // 从 res.data.data.rows 获取数据列表
+		totalKey: "data.records", // 从 res.data.data.records 获取总记录数
 		params: {
 			userId: "", // 可选：接收消息的用户 ID，为空则查询所有消息
 			page: 1, // 前端从 1 开始
@@ -153,7 +142,7 @@ const handleSearch = () => {
 const deleteLoadingMap = reactive({});
 
 // 删除消息
-const handleDelete = async (row) => {
+const handleDelete = async row => {
 	if (!row || !row.id) {
 		ElMessage.error("消息ID不能为空");
 		return;
