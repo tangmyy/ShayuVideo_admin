@@ -8,7 +8,7 @@
 			<ColorPicker />
 			<ThemeSetting id="themeSetting" />
 		</div>
-		<span class="username">打工人</span>
+		<span class="username">脆脆鲨同学</span>
 		<Avatar />
 	</div>
 </template>

@@ -21,9 +21,9 @@
 			<el-col :xs="24" :sm="24" :md="16" :lg="16">
 				<HomeLine />
 			</el-col>
-			<!-- <el-col :xs="24" :sm="24" :md="24" :lg="24" >
-        <HomeLine />
-      </el-col> -->
+			<el-col :xs="24" :sm="24" :md="24" :lg="24">
+				<HomeLine />
+			</el-col>
 		</el-row>
 	</div>
 </template>
@@ -34,33 +34,32 @@ import HomeCount from "./components/HomeCount.vue";
 import HomeList from "./components/HomeList.vue";
 import HomeLine from "./components/HomeLine.vue";
 import HomeTable from "./components/HomeTable.vue";
-// import HomePie from './components/HomePie.vue'
 
 const countList = [
 	{
-		name: "浏览量",
-		date: "周",
+		name: "点赞量",
+		date: "总",
 		type: "primary",
 		count: 2022,
 		icon: new URL("@/assets/images/see.png", import.meta.url).href
 	},
 	{
-		name: "下载量",
-		date: "年",
+		name: "视频数量",
+		date: "总",
 		type: "success",
 		count: 21999,
 		icon: new URL("@/assets/images/upload.png", import.meta.url).href
 	},
 	{
-		name: "成交金额",
-		date: "日",
+		name: "评论量",
+		date: "总",
 		type: "warning",
 		count: 18000,
 		icon: new URL("@/assets/images/money.png", import.meta.url).href
 	},
 	{
-		name: "数据",
-		date: "月",
+		name: "账号数量",
+		date: "总",
 		type: "danger",
 		count: 18999,
 		icon: new URL("@/assets/images/pie.png", import.meta.url).href

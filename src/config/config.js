@@ -1,5 +1,5 @@
 //  项目名称
-export const APP_NAME = "vue-diverse-admin";
+export const APP_NAME = "ShayuVideo-Admin";
 // 首页地址（默认）
 export const HOME_URL = "/home/index";
 

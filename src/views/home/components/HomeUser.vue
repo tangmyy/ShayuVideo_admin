@@ -1,6 +1,6 @@
 <template>
 	<div class="user">
-		<div class="greet">{{ getTimeState() }}~ 打工人</div>
+		<div class="greet">{{ getTimeState() }}~ 管理员</div>
 		<img
 			class="image"
 			src="https://gimg2.baidu.com/image_search/src=http%3A%2F%2Finews.gtimg.com%2Fnewsapp_bt%2F0%2F14216793838%2F1000.jpg&refer=http%3A%2F%2Finews.gtimg.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1663220582&t=16bb878645d4db0f55c89b68f608463d"
@@ -13,7 +13,7 @@
 				由vue3 + vite + element-plus，自定义主题颜色。界面设置配置。支持4种Layouts布局切换。i18n等...
 			</div>
 			<div class="introduce">
-				git地址：<el-link :href="url" target="_blank" type="danger">{{ url }}</el-link>
+				后端接口文档地址：<el-link :href="url" target="_blank" type="danger">{{ url }}</el-link>
 			</div>
 			<el-tag>前端韭菜</el-tag>
 		</div>
@@ -22,7 +22,7 @@
 <script setup>
 import { APP_NAME } from "@/config/config";
 const APPNAME = APP_NAME;
-const url = "https://github.com/1164095457/vue-diverse-admin";
+const url = "http://tmyyy.top:8088/doc.html#/home";
 import { getTimeState } from "@/utils/util.js";
 </script>
 <style lang="scss" scoped>
