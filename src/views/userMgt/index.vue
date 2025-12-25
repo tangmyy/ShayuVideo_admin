@@ -217,6 +217,21 @@
 				<el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
 			</template>
 		</el-dialog>
+		<!-- 新增用户对话框 -->
+		<el-dialog v-model="addDialogVisible" title="新增用户" width="500px" :close-on-click-modal="false">
+			<el-form ref="addFormRef" :model="addForm" :rules="addFormRules" label-width="100px">
+				<el-form-item label="手机号" prop="mobile">
+					<el-input v-model="addForm.mobile" placeholder="请输入手机号" clearable maxlength="11" />
+					<div style="font-size: 12px; color: #999; margin-top: 5px">
+						提示：如果该手机号未注册不，将创建新用户；如果该手机号已存在，将返回现有用户信息。
+					</div>
+				</el-form-item>
+			</el-form>
+			<template #footer>
+				<el-button @click="addDialogVisible = false">取消</el-button>
+				<el-button type="primary" :loading="addSubmitLoading" @click="handleAddUserSubmit">确定</el-button>
+			</template>
+		</el-dialog>
 		<div style="display: flex; justify-content: flex-end; margin-top: 10px">
 			<el-pagination
 				@current-change="
@@ -244,7 +259,7 @@
 <script setup name="userMgt">
 import { onMounted, ref, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getUserList, updateUserInfo, deleteOrRestoreUser, banOrRestoreUser } from "@/api/userMgt";
+import { getUserList, updateUserInfo, deleteOrRestoreUser, banOrRestoreUser, addUser } from "@/api/userMgt";
 import { useTable } from "@/utils/tableMethod";
 
 // UserInfoModifyType 枚举值
@@ -276,6 +291,22 @@ const { params, tableTotal, tableData, tableLoading, handleSearch, handleReset, 
 const dialogVisible = ref(false);
 const editFormRef = ref();
 const submitLoading = ref(false);
+
+// 新增用户对话框相关
+const addDialogVisible = ref(false);
+const addFormRef = ref();
+const addSubmitLoading = ref(false);
+const addForm = reactive({
+	mobile: ""
+});
+
+// 新增用户表单验证规则
+const addFormRules = {
+	mobile: [
+		{ required: true, message: "手机号不能为空", trigger: "blur" },
+		{ pattern: /^1[3-9]\d{9}$/, message: "请输入正确的手机号", trigger: "blur" }
+	]
+};
 // 使用 Map 来管理每个用户的 loading 状态
 const deleteOrRestoreLoadingMap = ref({});
 const banOrRestoreLoadingMap = ref({});
@@ -554,9 +585,64 @@ const handleBanOrRestoreUser = async row => {
 	}
 };
 
-// 新增用户
+// 打开新增用户对话框
 const handleAddUser = () => {
-	ElMessage.info("新增用户功能待实现");
+	addForm.mobile = "";
+	addDialogVisible.value = true;
+	// 重置表单验证状态
+	if (addFormRef.value) {
+		addFormRef.value.clearValidate();
+	}
+};
+
+// 提交新增用户
+const handleAddUserSubmit = async () => {
+	if (!addFormRef.value) return;
+
+	try {
+		await addFormRef.value.validate();
+
+		if (!addForm.mobile) {
+			ElMessage.error("手机号不能为空");
+			return;
+		}
+
+		// 先检查当前列表中是否已存在该手机号的用户
+		const existingUserInList = tableData.value.find(user => user.mobile === addForm.mobile);
+
+		addSubmitLoading.value = true;
+		const res = await addUser(addForm.mobile);
+
+		if (res.data && res.data.success) {
+			const userData = res.data.data;
+			// 检查返回的用户ID是否已经在当前列表中
+			const userExistsInList = tableData.value.find(user => user.id === userData?.id);
+
+			// 如果用户在当前列表中已存在，或者返回的用户ID与列表中某个用户匹配，说明是已存在的用户
+			if (existingUserInList || userExistsInList) {
+				const userId = userData?.id || "未知";
+				const nickname = userData?.nickname || "未设置";
+				ElMessage.warning(`该手机号已注册！用户ID: ${userId}，昵称: ${nickname}`);
+			} else {
+				const userId = userData?.id || "未知";
+				const nickname = userData?.nickname || "未设置";
+				ElMessage.success(`新增用户成功！用户ID: ${userId}，昵称: ${nickname}`);
+			}
+			addDialogVisible.value = false;
+			// 刷新列表
+			handleSearch();
+		} else {
+			ElMessage.error(res.data?.msg || "操作失败");
+		}
+	} catch (error) {
+		if (error !== false) {
+			// error !== false 表示不是表单验证失败
+			console.error("新增用户失败:", error);
+			ElMessage.error(error.response?.data?.msg || "操作失败，请稍后重试");
+		}
+	} finally {
+		addSubmitLoading.value = false;
+	}
 };
 
 onMounted(() => {

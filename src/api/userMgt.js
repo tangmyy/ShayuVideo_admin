@@ -122,3 +122,20 @@ export const banOrRestoreUser = (userId) => {
 	});
 };
 
+/**
+ * 管理端：新增用户
+ * 后端接口：/admin/users/adduser
+ * 如果用户不存在，则注册一个新用户；如果已存在，则返回现有用户信息
+ * @param {String} mobile - 手机号（必需）
+ * @returns {Promise} 返回用户信息
+ */
+export const addUser = (mobile) => {
+	return service({
+		method: "POST",
+		url: "/admin/users/adduser",
+		params: {
+			mobile: mobile
+		}
+	});
+};
+
