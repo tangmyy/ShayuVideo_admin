@@ -69,10 +69,10 @@
 					</template>
 				</el-table-column>
 
-				<el-table-column prop="isDeleted" label="删除状态" width="100">
+				<el-table-column prop="isDeleted" label="封禁状态" width="100">
 					<template #default="{ row }">
 						<el-tag :type="row.isDeleted === 1 || row.isDeleted === '1' ? 'danger' : 'success'">
-							{{ row.isDeleted === 1 || row.isDeleted === "1" ? "已删除" : "正常" }}
+							{{ row.isDeleted === 1 || row.isDeleted === "1" ? "已封禁" : "正常" }}
 						</el-tag>
 					</template>
 				</el-table-column>
@@ -88,7 +88,7 @@
 							:loading="deleteOrRestoreLoadingMap[row.vlogId]"
 							@click="handleDeleteOrRestoreVlog(row)"
 						>
-							删除
+							封禁
 						</el-button>
 						<el-button
 							v-if="row.isDeleted === 1 || row.isDeleted === '1'"
@@ -97,7 +97,7 @@
 							:loading="deleteOrRestoreLoadingMap[row.vlogId]"
 							@click="handleDeleteOrRestoreVlog(row)"
 						>
-							恢复
+							过审
 						</el-button>
 					</template>
 				</el-table-column>
@@ -290,10 +290,10 @@ const handleSubmit = async () => {
 	}
 };
 
-// 每个视频删除操作的 loading 状态
+// 每个视频封禁操作的 loading 状态
 const deleteOrRestoreLoadingMap = reactive({});
 
-// 删除/恢复视频（切换逻辑删除状态）
+// 封禁/过审视频（切换逻辑封禁状态）
 const handleDeleteOrRestoreVlog = async row => {
 	if (!row || !row.vlogId) {
 		ElMessage.error("视频ID不能为空");
@@ -302,10 +302,10 @@ const handleDeleteOrRestoreVlog = async row => {
 
 	// 处理 null/undefined 的情况，以及字符串 '1' 的情况
 	const isCurrentlyDeleted = row.isDeleted === 1 || row.isDeleted === "1";
-	const actionText = isCurrentlyDeleted ? "恢复" : "删除";
+	const actionText = isCurrentlyDeleted ? "过审" : "封禁";
 	const confirmText = isCurrentlyDeleted
-		? "确定要恢复该视频吗？恢复后视频将可以正常显示。"
-		: "确定要删除该视频吗？删除后视频将无法显示，但数据会保留。";
+		? "确定要过审该视频吗？过审后视频将可以正常显示。"
+		: "确定要封禁该视频吗？封禁后视频将无法显示，但数据会保留。";
 
 	try {
 		await ElMessageBox.confirm(confirmText, `确认${actionText}`, {
@@ -419,13 +419,13 @@ const handleSetSortType = async () => {
 			ElMessage.success("排序规则设置成功");
 		} else {
 			ElMessage.error(res.data?.msg || "排序规则设置失败");
-			// 恢复原值
+			// 过审原值
 			await fetchSortType();
 		}
 	} catch (error) {
 		console.error("设置排序类型失败:", error);
 		ElMessage.error(error.response?.data?.msg || "排序规则设置失败，请稍后重试");
-		// 恢复原值
+		// 过审原值
 		await fetchSortType();
 	} finally {
 		setSortTypeLoading.value = false;
