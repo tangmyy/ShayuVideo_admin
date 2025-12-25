@@ -310,7 +310,7 @@ const handleDeleteOrRestoreComment = async row => {
 		if (error !== "cancel") {
 			console.error(`${actionText}评论失败:`, error);
 			ElMessage.error(error.response?.data?.msg || `${actionText}失败，请稍后重试`);
-		}
+			}
 	} finally {
 		deleteOrRestoreLoadingMap[row.id] = false;
 	}

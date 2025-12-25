@@ -1,6 +1,6 @@
 <template>
 	<div class="card">
-		<el-form :inline="true" :model="params" class="demo-form-inline">
+		<el-form :inline="true" :model="params" class="demo-form-inline" style="display: flex; align-items: center; flex-wrap: wrap">
 			<el-form-item label="搜索名称">
 				<el-input v-model="params.name" placeholder="请输入昵称或手机号" clearable />
 			</el-form-item>
@@ -10,6 +10,9 @@
 			<el-form-item>
 				<el-button type="primary" @click="handleSearch()">搜索</el-button>
 				<el-button type="info" @click="handleReset()">清空</el-button>
+			</el-form-item>
+			<el-form-item style="margin-left: auto">
+				<el-button type="success" @click="handleAddUser">新增用户</el-button>
 			</el-form-item>
 		</el-form>
 		<div class="table-wrapper">
@@ -549,6 +552,11 @@ const handleBanOrRestoreUser = async row => {
 	} finally {
 		banOrRestoreLoadingMap.value[row.id] = false;
 	}
+};
+
+// 新增用户
+const handleAddUser = () => {
+	ElMessage.info("新增用户功能待实现");
 };
 
 onMounted(() => {
