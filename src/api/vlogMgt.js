@@ -62,3 +62,33 @@ export const deleteOrRestoreVlog = (vlogId) => {
 		}
 	});
 };
+
+/**
+ * 管理端：设置推荐视频流排序规则
+ * 后端接口：/admin/vlog/setSortType
+ *
+ * @param {Number} sortType - 排序类型：0-创建时间，1-点赞数，2-评论数
+ * @returns {Promise} 返回排序类型信息
+ */
+export const setVlogSortType = (sortType) => {
+	return service({
+		method: "POST",
+		url: "/admin/vlog/setSortType",
+		params: {
+			sortType: sortType
+		}
+	});
+};
+
+/**
+ * 管理端：获取推荐视频流排序规则
+ * 后端接口：/admin/vlog/getSortType
+ *
+ * @returns {Promise} 返回当前排序类型信息
+ */
+export const getVlogSortType = () => {
+	return service({
+		method: "GET",
+		url: "/admin/vlog/getSortType"
+	});
+};

@@ -8,6 +8,16 @@
 				<el-button type="primary" @click="handleSearch()">搜索</el-button>
 				<el-button type="info" @click="handleReset()">清空</el-button>
 			</el-form-item>
+			<el-form-item label="推荐视频流排序规则">
+				<el-select v-model="sortType" placeholder="请选择排序规则" style="width: 180px" :loading="sortTypeLoading">
+					<el-option label="创建时间" :value="0" />
+					<el-option label="点赞数" :value="1" />
+					<el-option label="评论数" :value="2" />
+				</el-select>
+				<el-button type="primary" :loading="setSortTypeLoading" @click="handleSetSortType" style="margin-left: 10px"
+					>设置</el-button
+				>
+			</el-form-item>
 		</el-form>
 
 		<div class="table-wrapper">
@@ -61,8 +71,8 @@
 
 				<el-table-column prop="isDeleted" label="删除状态" width="100">
 					<template #default="{ row }">
-						<el-tag :type="(row.isDeleted === 1 || row.isDeleted === '1') ? 'danger' : 'success'">
-							{{ (row.isDeleted === 1 || row.isDeleted === '1') ? "已删除" : "正常" }}
+						<el-tag :type="row.isDeleted === 1 || row.isDeleted === '1' ? 'danger' : 'success'">
+							{{ row.isDeleted === 1 || row.isDeleted === "1" ? "已删除" : "正常" }}
 						</el-tag>
 					</template>
 				</el-table-column>
@@ -92,7 +102,7 @@
 					</template>
 				</el-table-column>
 			</el-table>
-				</div>
+		</div>
 
 		<!-- 编辑视频对话框 -->
 		<el-dialog v-model="dialogVisible" title="编辑视频信息" width="600px" :close-on-click-modal="false">
@@ -146,14 +156,14 @@
 				:total="tableTotal"
 			>
 			</el-pagination>
-			</div>
+		</div>
 	</div>
 </template>
 
 <script setup name="videoMgt">
 import { onMounted, ref, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getVlogAdminList, updateVlogInfo, deleteOrRestoreVlog } from "@/api/vlogMgt";
+import { getVlogAdminList, updateVlogInfo, deleteOrRestoreVlog, setVlogSortType, getVlogSortType } from "@/api/vlogMgt";
 import { useTable } from "@/utils/tableMethod";
 
 const { params, tableTotal, tableData, tableLoading, handleSearch, handleReset, handleSizeChange, handleCurrentChange } =
@@ -170,7 +180,7 @@ const { params, tableTotal, tableData, tableLoading, handleSearch, handleReset, 
 			}
 		},
 		response: {
-			handleResponseData: (list) => {
+			handleResponseData: list => {
 				// 调试：打印第一条数据，检查 isDeleted 字段
 				if (list && list.length > 0) {
 					console.log("【视频管理】第一条数据示例:", list[0]);
@@ -268,7 +278,7 @@ const handleSubmit = async () => {
 			const errorMsg = res.data?.msg || res.data?.message || "编辑失败";
 			console.error("【视频编辑】编辑失败:", errorMsg, res.data);
 			ElMessage.error(errorMsg);
-			}
+		}
 	} catch (error) {
 		console.error("【视频编辑】编辑视频信息异常:", error);
 		console.error("【视频编辑】错误响应:", error.response);
@@ -291,7 +301,7 @@ const handleDeleteOrRestoreVlog = async row => {
 	}
 
 	// 处理 null/undefined 的情况，以及字符串 '1' 的情况
-	const isCurrentlyDeleted = row.isDeleted === 1 || row.isDeleted === '1';
+	const isCurrentlyDeleted = row.isDeleted === 1 || row.isDeleted === "1";
 	const actionText = isCurrentlyDeleted ? "恢复" : "删除";
 	const confirmText = isCurrentlyDeleted
 		? "确定要恢复该视频吗？恢复后视频将可以正常显示。"
@@ -324,8 +334,108 @@ const handleDeleteOrRestoreVlog = async row => {
 	}
 };
 
+// 排序类型状态（0-创建时间，1-点赞数，2-评论数）
+const sortType = ref(null);
+const sortTypeLoading = ref(false);
+const setSortTypeLoading = ref(false);
+
+// 枚举名称到数字的映射
+const sortTypeEnumMap = {
+	CREATED_TIME: 0, // 创建时间
+	LIKE_COUNTS: 1, // 点赞数
+	COMMENTS_COUNTS: 2 // 评论数
+};
+
+// 将后端返回的排序类型转换为数字
+const convertSortTypeToNumber = data => {
+	// 如果返回的是对象，尝试获取 type 字段
+	if (data && typeof data === "object") {
+		// 如果对象有 type 字段且是数字
+		if (data.type !== undefined && data.type !== null) {
+			if (typeof data.type === "number") {
+				return data.type;
+			}
+			// 如果 type 是字符串枚举名称，进行映射
+			if (typeof data.type === "string" && sortTypeEnumMap[data.type] !== undefined) {
+				return sortTypeEnumMap[data.type];
+			}
+		}
+		// 如果对象本身是枚举名称（检查对象的 name 或其他字段）
+		if (data.name && sortTypeEnumMap[data.name] !== undefined) {
+			return sortTypeEnumMap[data.name];
+		}
+	}
+
+	// 如果直接是数字
+	if (typeof data === "number") {
+		return data;
+	}
+
+	// 如果直接是字符串枚举名称
+	if (typeof data === "string" && sortTypeEnumMap[data] !== undefined) {
+		return sortTypeEnumMap[data];
+	}
+
+	return null;
+};
+
+// 获取当前排序类型
+const fetchSortType = async () => {
+	try {
+		sortTypeLoading.value = true;
+		const res = await getVlogSortType();
+		if (res.data && res.data.success && res.data.data) {
+			const sortTypeData = res.data.data;
+			console.log("【视频管理】获取到的排序类型数据:", sortTypeData);
+
+			// 转换为数字
+			const typeNumber = convertSortTypeToNumber(sortTypeData);
+			if (typeNumber !== null) {
+				sortType.value = typeNumber;
+				console.log("【视频管理】已填充排序类型:", sortType.value);
+			} else {
+				console.warn("【视频管理】无法解析排序类型数据:", sortTypeData);
+			}
+		}
+	} catch (error) {
+		console.error("获取排序类型失败:", error);
+		// 不显示错误提示，因为可能是首次使用，Redis 中没有值
+	} finally {
+		sortTypeLoading.value = false;
+	}
+};
+
+// 设置排序类型（点击设置按钮时调用）
+const handleSetSortType = async () => {
+	if (sortType.value === null || sortType.value === undefined) {
+		ElMessage.warning("请先选择排序规则");
+		return;
+	}
+
+	try {
+		setSortTypeLoading.value = true;
+		const res = await setVlogSortType(sortType.value);
+		if (res.data && res.data.success) {
+			ElMessage.success("排序规则设置成功");
+		} else {
+			ElMessage.error(res.data?.msg || "排序规则设置失败");
+			// 恢复原值
+			await fetchSortType();
+		}
+	} catch (error) {
+		console.error("设置排序类型失败:", error);
+		ElMessage.error(error.response?.data?.msg || "排序规则设置失败，请稍后重试");
+		// 恢复原值
+		await fetchSortType();
+	} finally {
+		setSortTypeLoading.value = false;
+	}
+};
+
 onMounted(() => {
 	handleSearch();
+	// 获取当前排序类型
+	fetchSortType();
 });
 </script>
 <style scoped>
