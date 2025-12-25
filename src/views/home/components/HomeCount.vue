@@ -7,7 +7,7 @@
 		<ul class="count-info">
 			<li class="count-info-item">
 				<div class="font-26" style="margin-left: -6px">
-					<CountTo prefix="￥" :end-val="list.count" />
+					<CountTo prefix="" :end-val="list.count" />
 				</div>
 				<div class="count-info-item-icon">
 					<img :src="list.icon" alt="" style="margin-left: 6px" />

@@ -29,40 +29,73 @@
 </template>
 
 <script setup name="home">
+import { ref, reactive, onMounted } from "vue";
 import HomeUser from "./components/HomeUser.vue";
 import HomeCount from "./components/HomeCount.vue";
 import HomeList from "./components/HomeList.vue";
 import HomeLine from "./components/HomeLine.vue";
 import HomeTable from "./components/HomeTable.vue";
+import { getCommentCounts, getLikeCounts } from "@/api/countsMgt";
 
-const countList = [
+const countList = reactive([
 	{
 		name: "点赞量",
 		date: "总",
 		type: "primary",
-		count: 2022,
-		icon: new URL("@/assets/images/see.png", import.meta.url).href
+		count: 0, // 初始值为0，将从后端获取
+		icon: new URL("@/assets/images/money.png", import.meta.url).href
 	},
 	{
 		name: "视频数量",
 		date: "总",
 		type: "success",
 		count: 21999,
-		icon: new URL("@/assets/images/upload.png", import.meta.url).href
+		icon: new URL("@/assets/images/see.png", import.meta.url).href
 	},
 	{
 		name: "评论量",
 		date: "总",
 		type: "warning",
-		count: 18000,
-		icon: new URL("@/assets/images/money.png", import.meta.url).href
+		count: 0, // 初始值为0，将从后端获取
+		icon: new URL("@/assets/images/pie.png", import.meta.url).href
 	},
 	{
 		name: "账号数量",
 		date: "总",
 		type: "danger",
 		count: 18999,
-		icon: new URL("@/assets/images/pie.png", import.meta.url).href
+		icon: new URL("@/assets/images/upload.png", import.meta.url).href
 	}
-];
+]);
+
+// 获取点赞总量
+const fetchLikeCounts = async () => {
+	try {
+		const res = await getLikeCounts();
+		if (res.data && res.data.success && res.data.data !== undefined) {
+			countList[0].count = Number(res.data.data) || 0;
+		}
+	} catch (error) {
+		console.error("获取点赞总量失败:", error);
+		// 失败时保持默认值0
+	}
+};
+
+// 获取评论总量
+const fetchCommentCounts = async () => {
+	try {
+		const res = await getCommentCounts();
+		if (res.data && res.data.success && res.data.data !== undefined) {
+			countList[2].count = Number(res.data.data) || 0;
+		}
+	} catch (error) {
+		console.error("获取评论总量失败:", error);
+		// 失败时保持默认值0
+	}
+};
+
+onMounted(() => {
+	fetchLikeCounts();
+	fetchCommentCounts();
+});
 </script>
