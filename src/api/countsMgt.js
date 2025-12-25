@@ -28,3 +28,31 @@ export const getLikeCounts = () => {
 	});
 };
 
+/**
+ * 管理端：获取所有视频数量
+ * 后端接口：/admin/counts/vlogs
+ * 返回所有视频的总数
+ *
+ * @returns {Promise} 返回视频数量（Integer）
+ */
+export const getVlogCounts = () => {
+	return service({
+		method: "GET",
+		url: "/admin/counts/vlogs"
+	});
+};
+
+/**
+ * 管理端：获取所有用户数量
+ * 后端接口：/admin/counts/users
+ * 返回所有用户的总数
+ *
+ * @returns {Promise} 返回用户数量（Integer）
+ */
+export const getUserCounts = () => {
+	return service({
+		method: "GET",
+		url: "/admin/counts/users"
+	});
+};
+
