@@ -8,12 +8,14 @@
 			<ColorPicker />
 			<ThemeSetting id="themeSetting" />
 		</div>
-		<span class="username">脆脆鲨同学</span>
+		<span class="username">{{ adminName }}</span>
 		<Avatar />
 	</div>
 </template>
 
 <script setup>
+import { computed } from "vue";
+import { GlobalStore } from "@/stores";
 import SearchMenu from "./components/SearchMenu.vue";
 import Language from "./components/Language.vue";
 import ThemeSetting from "./components/ThemeSetting.vue";
@@ -21,6 +23,17 @@ import LockScreen from "./components/LockScreen.vue";
 import FullScreen from "./components/FullScreen.vue";
 import Avatar from "./components/Avatar.vue";
 import ColorPicker from "./components/ColorPicker.vue";
+
+const globalStore = GlobalStore();
+
+// 获取管理员名称
+const adminName = computed(() => {
+	const adminInfo = globalStore.adminInfo;
+	if (adminInfo) {
+		return adminInfo.realName || adminInfo.username || "管理员";
+	}
+	return "管理员";
+});
 </script>
 
 <style scoped lang="scss">

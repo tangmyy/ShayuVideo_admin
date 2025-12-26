@@ -1,13 +1,20 @@
 <template>
 	<div class="user">
-		<div class="greet">{{ getTimeState() }}~ 管理员</div>
+		<div class="greet">{{ getTimeState() }}~ {{ adminName }}</div>
 		<img
+			v-if="adminInfo && adminInfo.avatar"
+			class="image"
+			:src="adminInfo.avatar"
+			alt=""
+		/>
+		<img
+			v-else
 			class="image"
 			src="https://gimg2.baidu.com/image_search/src=http%3A%2F%2Finews.gtimg.com%2Fnewsapp_bt%2F0%2F14216793838%2F1000.jpg&refer=http%3A%2F%2Finews.gtimg.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1663220582&t=16bb878645d4db0f55c89b68f608463d"
 			alt=""
 		/>
 		<div class="info">
-			<div class="name">User</div>
+			<div class="name">{{ adminName }}</div>
 			<div class="introduce">
 				<el-link type="primary">{{ APPNAME }}</el-link>
 				由vue3 + vite + element-plus，自定义主题颜色。界面设置配置。支持4种Layouts布局切换。i18n等...
@@ -20,10 +27,26 @@
 	</div>
 </template>
 <script setup>
+import { computed } from "vue";
 import { APP_NAME } from "@/config/config";
+import { GlobalStore } from "@/stores";
+import { getTimeState } from "@/utils/util.js";
+
 const APPNAME = APP_NAME;
 const url = "http://tmyyy.top:8088/doc.html#/home";
-import { getTimeState } from "@/utils/util.js";
+
+const globalStore = GlobalStore();
+
+// 获取管理员信息
+const adminInfo = computed(() => globalStore.adminInfo);
+
+// 获取管理员名称
+const adminName = computed(() => {
+	if (adminInfo.value) {
+		return adminInfo.value.realName || adminInfo.value.username || "管理员";
+	}
+	return "管理员";
+});
 </script>
 <style lang="scss" scoped>
 .user {

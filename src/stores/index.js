@@ -14,6 +14,8 @@ export const GlobalStore = defineStore({
 		token: "",
 		// userInfo
 		userInfo: "",
+		// adminInfo 管理员信息
+		adminInfo: null,
 		// element组件大小
 		assemblySize: "default",
 		// language
@@ -67,6 +69,10 @@ export const GlobalStore = defineStore({
 		// setThemeConfig
 		setThemeConfig(themeConfig) {
 			this.themeConfig = themeConfig;
+		},
+		// setAdminInfo
+		setAdminInfo(adminInfo) {
+			this.adminInfo = adminInfo;
 		}
 	},
 	persist: piniaPersistConfig("GlobalState")

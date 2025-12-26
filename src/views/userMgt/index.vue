@@ -132,7 +132,7 @@
 						</el-button>
 					</template>
 				</el-table-column>
-			</el-table>
+		</el-table>
 		</div>
 		<!-- 编辑用户对话框 -->
 		<el-dialog v-model="dialogVisible" title="编辑用户信息" width="600px" :close-on-click-modal="false">

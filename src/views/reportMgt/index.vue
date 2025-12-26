@@ -142,8 +142,14 @@
 					<el-input :value="handleForm.reportType === 1 ? '视频' : handleForm.reportType === 2 ? '评论' : '-'" disabled />
 				</el-form-item>
 				<el-form-item label="处理人ID" prop="handlerId">
-					<el-input v-model="handleForm.handlerId" placeholder="请输入处理人ID" clearable />
-					<div style="font-size: 12px; color: #999; margin-top: 5px">提示：请输入当前登录管理员的用户ID</div>
+					<el-input 
+						v-model="handleForm.handlerId" 
+						:placeholder="adminInfo ? `当前管理员ID: ${adminInfo.id}` : '请输入处理人ID'" 
+						:disabled="!!adminInfo"
+					/>
+					<div style="font-size: 12px; color: #999; margin-top: 5px">
+						{{ adminInfo ? `当前登录管理员: ${adminInfo.realName || adminInfo.username}` : '提示：请输入当前登录管理员的用户ID' }}
+					</div>
 				</el-form-item>
 				<el-form-item label="处理状态" prop="status">
 					<el-radio-group v-model="handleForm.status">
@@ -190,10 +196,16 @@
 </template>
 
 <script setup name="reportMgt">
-import { onMounted, ref, reactive } from "vue";
+import { onMounted, ref, reactive, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getReportList, handleReport } from "@/api/reportMgt";
 import { useTable } from "@/utils/tableMethod";
+import { GlobalStore } from "@/stores";
+
+const globalStore = GlobalStore();
+
+// 获取当前管理员信息
+const adminInfo = computed(() => globalStore.adminInfo);
 
 const {
 	params,
@@ -258,7 +270,8 @@ const handleOpenDialog = row => {
 	// 填充表单数据
 	handleForm.reportId = row.id || "";
 	handleForm.reportType = row.reportType;
-	handleForm.handlerId = ""; // 清空，让用户输入
+	// 自动填充当前管理员ID
+	handleForm.handlerId = adminInfo.value ? String(adminInfo.value.id) : "";
 	handleForm.status = 1; // 默认选择"已处理"
 	handleForm.handleResult = "";
 	handleForm.notifyReporter = false;
