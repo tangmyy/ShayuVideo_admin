@@ -161,10 +161,16 @@
 </template>
 
 <script setup name="videoMgt">
-import { onMounted, ref, reactive } from "vue";
+import { onMounted, ref, reactive, inject, nextTick } from "vue";
+import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getVlogAdminList, updateVlogInfo, deleteOrRestoreVlog, setVlogSortType, getVlogSortType } from "@/api/vlogMgt";
 import { useTable } from "@/utils/tableMethod";
+import { KeepAliveStore } from "@/stores/modules/keepAlive";
+
+const route = useRoute();
+const keepAliveStore = KeepAliveStore();
+const refreshCurrentPage = inject("refresh");
 
 const { params, tableTotal, tableData, tableLoading, handleSearch, handleReset, handleSizeChange, handleCurrentChange } =
 	useTable({
@@ -417,15 +423,29 @@ const handleSetSortType = async () => {
 		const res = await setVlogSortType(sortType.value);
 		if (res.data && res.data.success) {
 			ElMessage.success("排序规则设置成功");
+			// 刷新页面
+			if (refreshCurrentPage) {
+				setTimeout(() => {
+					keepAliveStore.removeKeepLiveName(route.name);
+					refreshCurrentPage(false);
+					nextTick(() => {
+						keepAliveStore.addKeepLiveName(route.name);
+						refreshCurrentPage(true);
+					});
+				}, 0);
+			} else {
+				// 如果没有刷新函数，则刷新列表数据
+				handleSearch();
+			}
 		} else {
 			ElMessage.error(res.data?.msg || "排序规则设置失败");
-			// 过审原值
+			// 恢复原值
 			await fetchSortType();
 		}
 	} catch (error) {
 		console.error("设置排序类型失败:", error);
 		ElMessage.error(error.response?.data?.msg || "排序规则设置失败，请稍后重试");
-		// 过审原值
+		// 恢复原值
 		await fetchSortType();
 	} finally {
 		setSortTypeLoading.value = false;
