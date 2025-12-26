@@ -97,6 +97,22 @@
 				"isAffix": false,
 				"isKeepAlive": true
 			}
+		},
+		{
+			"path": "/reportMgt",
+			"name": "reportMgt",
+			"component": "/reportMgt/index",
+			"id": "f",
+			"parentId": null,
+			"title": "举报管理",
+			"meta": {
+				"icon": "Document",
+				"isLink": "",
+				"isHide": false,
+				"isFull": false,
+				"isAffix": false,
+				"isKeepAlive": true
+			}
 		}
 
 	],
