@@ -58,7 +58,7 @@
 			"parentId": null,
 			"title": "评论管理",
 			"meta": {
-				"icon": "Menu",
+				"icon": "ChatDotRound",
 				"isLink": "",
 				"isHide": false,
 				"isFull": false,
@@ -74,7 +74,7 @@
 			"parentId": null,
 			"title": "粉丝管理",
 			"meta": {
-				"icon": "Pointer",
+				"icon": "DataLine",
 				"isLink": "",
 				"isHide": false,
 				"isFull": false,
@@ -90,7 +90,7 @@
 			"parentId": null,
 			"title": "消息管理",
 			"meta": {
-				"icon": "Document",
+				"icon": "ChatSquare",
 				"isLink": "",
 				"isHide": false,
 				"isFull": false,
@@ -106,7 +106,7 @@
 			"parentId": null,
 			"title": "举报管理",
 			"meta": {
-				"icon": "Document",
+				"icon": "ElementPlus",
 				"isLink": "",
 				"isHide": false,
 				"isFull": false,
