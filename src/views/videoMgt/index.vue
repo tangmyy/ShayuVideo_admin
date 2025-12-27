@@ -161,7 +161,7 @@
 </template>
 
 <script setup name="videoMgt">
-import { onMounted, ref, reactive, inject, nextTick } from "vue";
+import { onMounted, onActivated, ref, reactive, inject, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getVlogAdminList, updateVlogInfo, deleteOrRestoreVlog, setVlogSortType, getVlogSortType } from "@/api/vlogMgt";
@@ -453,6 +453,14 @@ const handleSetSortType = async () => {
 };
 
 onMounted(() => {
+	handleSearch();
+	// 获取当前排序类型
+	fetchSortType();
+});
+
+// 使用 onActivated 确保每次激活页面时都自动请求（适用于 keep-alive 缓存的页面）
+onActivated(() => {
+	// 每次激活页面时自动请求列表
 	handleSearch();
 	// 获取当前排序类型
 	fetchSortType();

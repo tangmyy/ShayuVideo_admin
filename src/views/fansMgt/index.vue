@@ -80,7 +80,7 @@
 </template>
 
 <script setup name="fansMgt">
-import { onMounted } from "vue";
+import { onMounted, onActivated } from "vue";
 import { ElMessage } from "element-plus";
 import { getFansAdminList } from "@/api/fansMgt";
 import { useTable } from "@/utils/tableMethod";
@@ -115,6 +115,12 @@ const handleSearch = () => {
 
 onMounted(() => {
 	// 可以自动查询所有粉丝关系
+	handleSearch();
+});
+
+// 使用 onActivated 确保每次激活页面时都自动请求（适用于 keep-alive 缓存的页面）
+onActivated(() => {
+	// 每次激活页面时自动请求列表
 	handleSearch();
 });
 </script>

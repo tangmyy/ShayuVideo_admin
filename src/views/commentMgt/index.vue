@@ -152,7 +152,7 @@
 </template>
 
 <script setup name="commentMgt">
-import { onMounted, ref, reactive } from "vue";
+import { onMounted, onActivated, ref, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getCommentAdminList, updateCommentInfo, deleteOrRestoreComment } from "@/api/commentMgt";
 import { useTable } from "@/utils/tableMethod";
@@ -318,6 +318,12 @@ const handleDeleteOrRestoreComment = async row => {
 
 onMounted(() => {
 	// 可以自动查询所有评论（因为 vlogId 和 userId 都是可选参数）
+	handleSearch();
+});
+
+// 使用 onActivated 确保每次激活页面时都自动请求（适用于 keep-alive 缓存的页面）
+onActivated(() => {
+	// 每次激活页面时自动请求列表
 	handleSearch();
 });
 </script>

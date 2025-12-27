@@ -250,7 +250,7 @@
 </template>
 
 <script setup name="reportMgt">
-import { onMounted, ref, reactive, computed } from "vue";
+import { onMounted, onActivated, ref, reactive, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getReportList, handleReport, updateReport, resetReport } from "@/api/reportMgt";
 import { useTable } from "@/utils/tableMethod";
@@ -545,6 +545,12 @@ const handleResetReport = async row => {
 
 onMounted(() => {
 	// 自动查询所有举报
+	handleSearch();
+});
+
+// 使用 onActivated 确保每次激活页面时都自动请求（适用于 keep-alive 缓存的页面）
+onActivated(() => {
+	// 每次激活页面时自动请求列表
 	handleSearch();
 });
 </script>

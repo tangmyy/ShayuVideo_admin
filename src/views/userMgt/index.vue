@@ -257,7 +257,7 @@
 	</div>
 </template>
 <script setup name="userMgt">
-import { onMounted, ref, reactive } from "vue";
+import { onMounted, onActivated, ref, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getUserList, updateUserInfo, deleteOrRestoreUser, banOrRestoreUser, addUser } from "@/api/userMgt";
 import { useTable } from "@/utils/tableMethod";
@@ -646,6 +646,12 @@ const handleAddUserSubmit = async () => {
 };
 
 onMounted(() => {
+	handleSearch();
+});
+
+// 使用 onActivated 确保每次激活页面时都自动请求（适用于 keep-alive 缓存的页面）
+onActivated(() => {
+	// 每次激活页面时自动请求列表
 	handleSearch();
 });
 </script>
