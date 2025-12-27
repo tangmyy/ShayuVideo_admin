@@ -35,7 +35,7 @@ import HomeCount from "./components/HomeCount.vue";
 import HomeList from "./components/HomeList.vue";
 import HomeLine from "./components/HomeLine.vue";
 import HomeTable from "./components/HomeTable.vue";
-import { getCommentCounts, getLikeCounts, getVlogCounts, getUserCounts } from "@/api/countsMgt";
+import { getCommentCounts, getLikeCounts, getVlogCounts, getUserCounts, getReportCounts } from "@/api/countsMgt";
 
 const countList = reactive([
 	{
@@ -60,9 +60,16 @@ const countList = reactive([
 		icon: new URL("@/assets/images/pie.png", import.meta.url).href
 	},
 	{
-		name: "账号数量",
+		name: "举报数量",
 		date: "总",
 		type: "danger",
+		count: 0, // 初始值为0，将从后端获取
+		icon: new URL("@/assets/images/upload.png", import.meta.url).href
+	},
+	{
+		name: "账号数量",
+		date: "总",
+		type: "info",
 		count: 0, // 初始值为0，将从后端获取
 		icon: new URL("@/assets/images/upload.png", import.meta.url).href
 	}
@@ -107,12 +114,25 @@ const fetchVlogCounts = async () => {
 	}
 };
 
+// 获取举报数量
+const fetchReportCounts = async () => {
+	try {
+		const res = await getReportCounts();
+		if (res.data && res.data.success && res.data.data !== undefined) {
+			countList[3].count = Number(res.data.data) || 0;
+		}
+	} catch (error) {
+		console.error("获取举报数量失败:", error);
+		// 失败时保持默认值0
+	}
+};
+
 // 获取用户数量
 const fetchUserCounts = async () => {
 	try {
 		const res = await getUserCounts();
 		if (res.data && res.data.success && res.data.data !== undefined) {
-			countList[3].count = Number(res.data.data) || 0;
+			countList[4].count = Number(res.data.data) || 0;
 		}
 	} catch (error) {
 		console.error("获取用户数量失败:", error);
@@ -125,5 +145,6 @@ onMounted(() => {
 	fetchVlogCounts();
 	fetchCommentCounts();
 	fetchUserCounts();
+	fetchReportCounts();
 });
 </script>

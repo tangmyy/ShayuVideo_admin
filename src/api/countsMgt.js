@@ -56,3 +56,17 @@ export const getUserCounts = () => {
 	});
 };
 
+/**
+ * 管理端：统计所有举报数量
+ * 后端接口：/admin/counts/report
+ * 返回所有举报的总数
+ *
+ * @returns {Promise} 返回举报数量（Integer）
+ */
+export const getReportCounts = () => {
+	return service({
+		method: "GET",
+		url: "/admin/counts/report"
+	});
+};
+
