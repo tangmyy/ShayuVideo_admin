@@ -111,7 +111,7 @@
 					</template>
 				</el-table-column>
 
-				<el-table-column label="操作" width="200" fixed="right">
+				<el-table-column label="操作" width="280" fixed="right">
 					<template #default="{ row }">
 						<el-button
 							v-if="row.status === 0"
@@ -130,6 +130,15 @@
 							@click="handleOpenEditDialog(row)"
 						>
 							编辑
+						</el-button>
+						<el-button
+							v-if="row.status === 1 || row.status === 2"
+							type="danger"
+							size="small"
+							:loading="resetLoadingMap[row.id]"
+							@click="handleResetReport(row)"
+						>
+							重置
 						</el-button>
 					</template>
 				</el-table-column>
@@ -243,7 +252,7 @@
 <script setup name="reportMgt">
 import { onMounted, ref, reactive, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getReportList, handleReport, updateReport } from "@/api/reportMgt";
+import { getReportList, handleReport, updateReport, resetReport } from "@/api/reportMgt";
 import { useTable } from "@/utils/tableMethod";
 import { GlobalStore } from "@/stores";
 
@@ -326,6 +335,9 @@ const editFormRules = {
 
 // 每个举报编辑操作的 loading 状态
 const editLoadingMap = reactive({});
+
+// 每个举报重置操作的 loading 状态
+const resetLoadingMap = reactive({});
 
 // 打开处理对话框
 const handleOpenDialog = row => {
@@ -484,6 +496,50 @@ const handleEditSubmit = async () => {
 	} finally {
 		editSubmitLoading.value = false;
 		editLoadingMap[editForm.reportId] = false;
+	}
+};
+
+// 重置举报处理记录
+const handleResetReport = async row => {
+	if (!row || !row.id) {
+		ElMessage.error("举报ID不能为空");
+		return;
+	}
+
+	// 验证记录是否已被处理过（只能重置已处理的记录）
+	if (row.status === 0 || row.status === null || row.status === undefined) {
+		ElMessage.warning("只能重置已处理的举报记录");
+		return;
+	}
+
+	try {
+		await ElMessageBox.confirm(
+			"确定要重置该举报的处理记录吗？重置后将清除所有处理信息，状态将恢复为待处理，并删除对用户的通知。",
+			"确认重置",
+			{
+				confirmButtonText: "确定",
+				cancelButtonText: "取消",
+				type: "warning"
+			}
+		);
+
+		resetLoadingMap[row.id] = true;
+		const res = await resetReport(row.id);
+
+		if (res.data && res.data.success) {
+			ElMessage.success("重置成功");
+			// 刷新列表
+			handleSearch();
+		} else {
+			ElMessage.error(res.data?.msg || "重置失败");
+		}
+	} catch (error) {
+		if (error !== "cancel") {
+			console.error("重置举报失败:", error);
+			ElMessage.error(error.response?.data?.msg || "重置失败，请稍后重试");
+		}
+	} finally {
+		resetLoadingMap[row.id] = false;
 	}
 };
 

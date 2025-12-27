@@ -77,6 +77,23 @@ export const updateReport = (updateData) => {
 };
 
 /**
+ * 管理端：重置举报的处理记录
+ * 后端接口：/admin/report/reset
+ *
+ * @param {String} reportId - 举报ID（必需）
+ * @returns {Promise} 返回重置后的举报信息
+ */
+export const resetReport = (reportId) => {
+	return service({
+		method: "PUT",
+		url: "/admin/report/reset",
+		params: {
+			reportId: reportId
+		}
+	});
+};
+
+/**
  * 管理端：统计指定对象的举报次数
  * 后端接口：/admin/report/count
  *
