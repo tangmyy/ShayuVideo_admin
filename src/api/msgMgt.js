@@ -41,4 +41,27 @@ export const deleteMsg = (msgId) => {
 	});
 };
 
+/**
+ * 管理端：编辑消息
+ * 后端接口：/admin/msg/update
+ *
+ * @param {Object} updateData - 更新数据
+ * @param {String} updateData.id - 消息ID（必需）
+ * @param {String} [updateData.fromUserId] - 发送者用户ID（可选）
+ * @param {String} [updateData.fromNickname] - 发送者昵称（可选）
+ * @param {String} [updateData.fromFace] - 发送者头像（可选）
+ * @param {String} [updateData.toUserId] - 接收者用户ID（可选）
+ * @param {Number} [updateData.msgType] - 消息类型（可选）
+ * @param {Object} [updateData.msgContent] - 消息内容（可选，Map类型）
+ * @param {Boolean} [updateData.mergeContent] - 是否合并msgContent（可选，默认false）
+ * @returns {Promise} 返回更新后的消息对象
+ */
+export const updateMsg = (updateData) => {
+	return service({
+		method: "POST",
+		url: "/admin/msg/update",
+		data: updateData
+	});
+};
+
 

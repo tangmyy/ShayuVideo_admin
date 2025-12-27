@@ -7,12 +7,9 @@
 			:src="adminInfo.avatar"
 			alt=""
 		/>
-		<img
-			v-else
-			class="image"
-			src="https://gimg2.baidu.com/image_search/src=http%3A%2F%2Finews.gtimg.com%2Fnewsapp_bt%2F0%2F14216793838%2F1000.jpg&refer=http%3A%2F%2Finews.gtimg.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1663220582&t=16bb878645d4db0f55c89b68f608463d"
-			alt=""
-		/>
+		<div v-else class="image image-placeholder">
+			<el-icon class="placeholder-icon"><User /></el-icon>
+		</div>
 		<div class="info">
 			<div class="name">{{ adminName }}</div>
 			<div class="introduce">
@@ -28,6 +25,7 @@
 </template>
 <script setup>
 import { computed } from "vue";
+import { User } from "@element-plus/icons-vue";
 import { APP_NAME } from "@/config/config";
 import { GlobalStore } from "@/stores";
 import { getTimeState } from "@/utils/util.js";
@@ -66,7 +64,20 @@ const adminName = computed(() => {
 		width: 80px;
 		height: 80px;
 		border-radius: 50%;
-		margin-top: 36px;
+		margin: 36px auto 0;
+		display: block;
+		object-fit: cover;
+	}
+	.image-placeholder {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-color: #f0f0f0;
+		margin: 36px auto 0;
+		.placeholder-icon {
+			font-size: 40px;
+			color: #999;
+		}
 	}
 	.info {
 		.name {
