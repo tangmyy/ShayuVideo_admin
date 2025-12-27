@@ -62,18 +62,14 @@
 								{{ row.targetTitle || row.targetId || "-" }}
 							</div>
 							<div style="font-size: 12px; color: #999">视频ID: {{ row.targetId }}</div>
-							<div v-if="row.targetUserNickname" style="font-size: 12px; color: #999">
-								作者: {{ row.targetUserNickname }}
-							</div>
+							<div v-if="row.targetUserNickname" style="font-size: 12px; color: #999">作者: {{ row.targetUserNickname }}</div>
 						</div>
 						<div v-else-if="row.reportType === 2">
 							<div style="font-weight: 500; margin-bottom: 4px">
 								{{ row.targetContent || row.targetId || "-" }}
 							</div>
 							<div style="font-size: 12px; color: #999">评论ID: {{ row.targetId }}</div>
-							<div v-if="row.targetUserNickname" style="font-size: 12px; color: #999">
-								评论者: {{ row.targetUserNickname }}
-							</div>
+							<div v-if="row.targetUserNickname" style="font-size: 12px; color: #999">评论者: {{ row.targetUserNickname }}</div>
 						</div>
 						<div v-else>-</div>
 					</template>
@@ -94,8 +90,8 @@
 				<el-table-column label="处理人" width="150">
 					<template #default="{ row }">
 						<div v-if="row.handlerNickname">
+							<div style="font-size: 12px; color: #999">ID: {{ row.handlerId }}</div>
 							<div style="font-weight: 500">{{ row.handlerNickname }}</div>
-							<div style="font-size: 12px; color: #999">{{ row.handlerId }}</div>
 						</div>
 						<span v-else>-</span>
 					</template>
@@ -115,7 +111,7 @@
 					</template>
 				</el-table-column>
 
-				<el-table-column label="操作" width="120" fixed="right">
+				<el-table-column label="操作" width="200" fixed="right">
 					<template #default="{ row }">
 						<el-button
 							v-if="row.status === 0"
@@ -126,11 +122,60 @@
 						>
 							处理
 						</el-button>
-						<span v-else style="color: #999">已处理</span>
+						<el-button
+							v-if="row.status === 1 || row.status === 2"
+							type="warning"
+							size="small"
+							:loading="editLoadingMap[row.id]"
+							@click="handleOpenEditDialog(row)"
+						>
+							编辑
+						</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
 		</div>
+
+		<!-- 编辑举报对话框 -->
+		<el-dialog v-model="editDialogVisible" title="编辑举报记录" width="600px" :close-on-click-modal="false">
+			<el-form ref="editFormRef" :model="editForm" :rules="editFormRules" label-width="100px">
+				<el-form-item label="举报ID" prop="reportId">
+					<el-input v-model="editForm.reportId" disabled />
+				</el-form-item>
+				<el-form-item label="举报类型" prop="reportType">
+					<el-input :value="editForm.reportType === 1 ? '视频' : editForm.reportType === 2 ? '评论' : '-'" disabled />
+				</el-form-item>
+				<el-form-item label="处理人ID" prop="handlerId">
+					<el-input
+						v-model="editForm.handlerId"
+						:placeholder="adminInfo ? `当前管理员ID: ${adminInfo.id}` : '请输入处理人ID'"
+						:disabled="!!adminInfo"
+					/>
+					<div style="font-size: 12px; color: #999; margin-top: 5px">
+						{{ adminInfo ? `当前登录管理员: ${adminInfo.realName || adminInfo.username}` : "提示：请输入当前登录管理员的用户ID" }}
+					</div>
+				</el-form-item>
+				<el-form-item label="处理状态" prop="status">
+					<el-radio-group v-model="editForm.status">
+						<el-radio :label="1">已处理</el-radio>
+						<el-radio :label="2">已驳回</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="处理结果说明" prop="handleResult">
+					<el-input
+						v-model="editForm.handleResult"
+						type="textarea"
+						:rows="4"
+						placeholder="请输入处理结果说明（可选）"
+						clearable
+					/>
+				</el-form-item>
+			</el-form>
+			<template #footer>
+				<el-button @click="editDialogVisible = false">取消</el-button>
+				<el-button type="primary" :loading="editSubmitLoading" @click="handleEditSubmit">确定</el-button>
+			</template>
+		</el-dialog>
 
 		<!-- 处理举报对话框 -->
 		<el-dialog v-model="handleDialogVisible" title="处理举报" width="600px" :close-on-click-modal="false">
@@ -142,13 +187,13 @@
 					<el-input :value="handleForm.reportType === 1 ? '视频' : handleForm.reportType === 2 ? '评论' : '-'" disabled />
 				</el-form-item>
 				<el-form-item label="处理人ID" prop="handlerId">
-					<el-input 
-						v-model="handleForm.handlerId" 
-						:placeholder="adminInfo ? `当前管理员ID: ${adminInfo.id}` : '请输入处理人ID'" 
+					<el-input
+						v-model="handleForm.handlerId"
+						:placeholder="adminInfo ? `当前管理员ID: ${adminInfo.id}` : '请输入处理人ID'"
 						:disabled="!!adminInfo"
 					/>
 					<div style="font-size: 12px; color: #999; margin-top: 5px">
-						{{ adminInfo ? `当前登录管理员: ${adminInfo.realName || adminInfo.username}` : '提示：请输入当前登录管理员的用户ID' }}
+						{{ adminInfo ? `当前登录管理员: ${adminInfo.realName || adminInfo.username}` : "提示：请输入当前登录管理员的用户ID" }}
 					</div>
 				</el-form-item>
 				<el-form-item label="处理状态" prop="status">
@@ -198,7 +243,7 @@
 <script setup name="reportMgt">
 import { onMounted, ref, reactive, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getReportList, handleReport } from "@/api/reportMgt";
+import { getReportList, handleReport, updateReport } from "@/api/reportMgt";
 import { useTable } from "@/utils/tableMethod";
 import { GlobalStore } from "@/stores";
 
@@ -259,6 +304,28 @@ const handleFormRules = {
 
 // 每个举报处理操作的 loading 状态
 const handleLoadingMap = reactive({});
+
+// 编辑举报对话框相关
+const editDialogVisible = ref(false);
+const editFormRef = ref();
+const editSubmitLoading = ref(false);
+const editForm = reactive({
+	reportId: "",
+	reportType: undefined,
+	handlerId: "",
+	status: 1, // 默认选择"已处理"
+	handleResult: ""
+});
+
+// 编辑表单验证规则
+const editFormRules = {
+	reportId: [{ required: true, message: "举报ID不能为空", trigger: "blur" }],
+	handlerId: [{ required: true, message: "处理人ID不能为空", trigger: "blur" }],
+	status: [{ required: true, message: "请选择处理状态", trigger: "change" }]
+};
+
+// 每个举报编辑操作的 loading 状态
+const editLoadingMap = reactive({});
 
 // 打开处理对话框
 const handleOpenDialog = row => {
@@ -337,6 +404,89 @@ const handleSubmit = async () => {
 	}
 };
 
+// 打开编辑对话框
+const handleOpenEditDialog = row => {
+	if (!row || !row.id) {
+		ElMessage.error("举报ID不能为空");
+		return;
+	}
+
+	// 验证记录是否已被处理过（只能编辑已处理的记录）
+	if (row.status === 0 || row.status === null || row.status === undefined) {
+		ElMessage.warning("只能编辑已处理的举报记录");
+		return;
+	}
+
+	// 填充表单数据
+	editForm.reportId = row.id || "";
+	editForm.reportType = row.reportType;
+	// 自动填充当前管理员ID，如果没有则使用原处理人ID
+	editForm.handlerId = adminInfo.value ? String(adminInfo.value.id) : row.handlerId || "";
+	// 使用当前状态
+	editForm.status = row.status === 1 ? 1 : 2;
+	// 使用当前处理结果
+	editForm.handleResult = row.handleResult || "";
+
+	editDialogVisible.value = true;
+
+	// 重置表单验证状态
+	if (editFormRef.value) {
+		editFormRef.value.clearValidate();
+	}
+};
+
+// 提交编辑
+const handleEditSubmit = async () => {
+	if (!editFormRef.value) return;
+
+	try {
+		await editFormRef.value.validate();
+
+		if (!editForm.reportId) {
+			ElMessage.error("举报ID不能为空");
+			return;
+		}
+
+		if (!editForm.handlerId) {
+			ElMessage.error("处理人ID不能为空");
+			return;
+		}
+
+		if (editForm.status !== 1 && editForm.status !== 2) {
+			ElMessage.error("请选择处理状态（已处理或已驳回）");
+			return;
+		}
+
+		editSubmitLoading.value = true;
+		editLoadingMap[editForm.reportId] = true;
+
+		const res = await updateReport({
+			reportId: editForm.reportId,
+			handlerId: editForm.handlerId,
+			status: editForm.status,
+			handleResult: editForm.handleResult || undefined
+		});
+
+		if (res.data && res.data.success) {
+			ElMessage.success("编辑成功");
+			editDialogVisible.value = false;
+			// 刷新列表
+			handleSearch();
+		} else {
+			ElMessage.error(res.data?.msg || "编辑失败");
+		}
+	} catch (error) {
+		if (error !== false) {
+			// error !== false 表示不是表单验证失败
+			console.error("编辑举报失败:", error);
+			ElMessage.error(error.response?.data?.msg || "编辑失败，请稍后重试");
+		}
+	} finally {
+		editSubmitLoading.value = false;
+		editLoadingMap[editForm.reportId] = false;
+	}
+};
+
 onMounted(() => {
 	// 自动查询所有举报
 	handleSearch();
@@ -353,4 +503,3 @@ onMounted(() => {
 	overflow-x: auto !important;
 }
 </style>
-

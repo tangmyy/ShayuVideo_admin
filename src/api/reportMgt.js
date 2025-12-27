@@ -53,6 +53,30 @@ export const handleReport = (handleData) => {
 };
 
 /**
+ * 管理端：修改已处理的举报记录
+ * 后端接口：/admin/report/update
+ *
+ * @param {Object} updateData - 更新数据
+ * @param {String} updateData.reportId - 举报ID（必需）
+ * @param {String} updateData.handlerId - 处理人ID（必需）
+ * @param {Number} updateData.status - 处理状态（必需，1-已处理，2-已驳回）
+ * @param {String} [updateData.handleResult] - 处理结果说明（可选）
+ * @returns {Promise} 返回更新后的举报信息
+ */
+export const updateReport = (updateData) => {
+	return service({
+		method: "PUT",
+		url: "/admin/report/update",
+		params: {
+			reportId: updateData.reportId,
+			handlerId: updateData.handlerId,
+			status: updateData.status,
+			handleResult: updateData.handleResult || undefined
+		}
+	});
+};
+
+/**
  * 管理端：统计指定对象的举报次数
  * 后端接口：/admin/report/count
  *
