@@ -92,3 +92,27 @@ export const getVlogSortType = () => {
 		url: "/admin/vlog/getSortType"
 	});
 };
+
+/**
+ * 管理端：审核视频（封禁/解封视频）
+ * 后端接口：/admin/vlog/audit
+ *
+ * @param {Object} auditData - 审核数据
+ * @param {String} auditData.vlogId - 视频ID（必需）
+ * @param {Number} auditData.auditStatus - 审核状态：0-待审核，1-通过（解封），2-拒绝（封禁）（必需）
+ * @param {Number} auditData.adminId - 管理员ID（必需）
+ * @param {String} [auditData.auditRemark] - 审核备注（可选）
+ * @returns {Promise} 返回操作结果
+ */
+export const auditVlog = (auditData) => {
+	return service({
+		method: "POST",
+		url: "/admin/vlog/audit",
+		params: {
+			vlogId: auditData.vlogId,
+			auditStatus: auditData.auditStatus,
+			adminId: auditData.adminId,
+			auditRemark: auditData.auditRemark || undefined
+		}
+	});
+};

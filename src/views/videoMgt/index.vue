@@ -76,6 +76,14 @@
 					</template>
 				</el-table-column>
 
+				<el-table-column prop="auditStatus" label="审核状态" width="100">
+					<template #default="{ row }">
+						<el-tag :type="row.auditStatus === 2 ? 'danger' : row.auditStatus === 1 ? 'success' : 'info'">
+							{{ row.auditStatus === 2 ? "已封禁" : row.auditStatus === 1 ? "已通过" : "待审核" }}
+						</el-tag>
+					</template>
+				</el-table-column>
+
 				<el-table-column prop="isDeleted" label="删除状态" width="100">
 					<template #default="{ row }">
 						<el-tag :type="row.isDeleted === 1 || row.isDeleted === '1' ? 'danger' : 'success'">
@@ -85,9 +93,27 @@
 				</el-table-column>
 
 				<!-- IndexVlogVO 中没有时间字段，这里先不展示创建/更新时间 -->
-				<el-table-column label="操作" width="200" fixed="right">
+				<el-table-column label="操作" width="280" fixed="right">
 					<template #default="{ row }">
 						<el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+						<el-button
+							v-if="row.auditStatus !== 2"
+							type="warning"
+							size="small"
+							:loading="banOrRestoreLoadingMap[row.vlogId]"
+							@click="handleBanOrRestoreVlog(row)"
+						>
+							封禁
+						</el-button>
+						<el-button
+							v-if="row.auditStatus === 2"
+							type="success"
+							size="small"
+							:loading="banOrRestoreLoadingMap[row.vlogId]"
+							@click="handleBanOrRestoreVlog(row)"
+						>
+							解封
+						</el-button>
 						<el-button
 							v-if="row.isDeleted !== 1 && row.isDeleted !== '1'"
 							type="danger"
@@ -171,13 +197,15 @@
 import { onMounted, onActivated, ref, reactive, inject, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getVlogAdminList, updateVlogInfo, deleteOrRestoreVlog, setVlogSortType, getVlogSortType } from "@/api/vlogMgt";
+import { getVlogAdminList, updateVlogInfo, deleteOrRestoreVlog, setVlogSortType, getVlogSortType, auditVlog } from "@/api/vlogMgt";
+import { GlobalStore } from "@/stores";
 import { useTable } from "@/utils/tableMethod";
 import { KeepAliveStore } from "@/stores/modules/keepAlive";
 
 const route = useRoute();
 const keepAliveStore = KeepAliveStore();
 const refreshCurrentPage = inject("refresh");
+const globalStore = GlobalStore();
 
 const { params, tableTotal, tableData, tableLoading, handleSearch, handleReset, handleSizeChange, handleCurrentChange } =
 	useTable({
@@ -305,6 +333,63 @@ const handleSubmit = async () => {
 
 // 每个视频删除操作的 loading 状态
 const deleteOrRestoreLoadingMap = reactive({});
+// 每个视频封禁操作的 loading 状态
+const banOrRestoreLoadingMap = reactive({});
+
+// 封禁/解封视频（使用审核接口）
+const handleBanOrRestoreVlog = async row => {
+	if (!row || !row.vlogId) {
+		ElMessage.error("视频ID不能为空");
+		return;
+	}
+
+	// 获取当前管理员信息
+	const adminInfo = globalStore.adminInfo;
+	if (!adminInfo || !adminInfo.id) {
+		ElMessage.error("管理员信息不存在，请重新登录");
+		return;
+	}
+
+	// 处理审核状态：auditStatus === 2 表示已封禁，需要解封（auditStatus = 1）
+	// auditStatus !== 2 表示未封禁，需要封禁（auditStatus = 2）
+	const isCurrentlyBanned = row.auditStatus === 2;
+	const auditStatus = isCurrentlyBanned ? 1 : 2; // 1-通过（解封），2-拒绝（封禁）
+	const actionText = isCurrentlyBanned ? "解封" : "封禁";
+	const confirmText = isCurrentlyBanned
+		? "确定要解封该视频吗？解封后视频将可以正常显示。"
+		: "确定要封禁该视频吗？封禁后视频将无法显示。";
+
+	try {
+		await ElMessageBox.confirm(confirmText, `确认${actionText}`, {
+			confirmButtonText: "确定",
+			cancelButtonText: "取消",
+			type: "warning"
+		});
+
+		banOrRestoreLoadingMap[row.vlogId] = true;
+		const res = await auditVlog({
+			vlogId: row.vlogId,
+			auditStatus: auditStatus,
+			adminId: Number(adminInfo.id),
+			auditRemark: `${actionText}操作`
+		});
+
+		if (res.data && res.data.success) {
+			ElMessage.success(`${actionText}成功`);
+			// 刷新列表
+			handleSearch();
+		} else {
+			ElMessage.error(res.data?.msg || `${actionText}失败`);
+		}
+	} catch (error) {
+		if (error !== "cancel") {
+			console.error(`${actionText}视频失败:`, error);
+			ElMessage.error(error.response?.data?.msg || `${actionText}失败，请稍后重试`);
+		}
+	} finally {
+		banOrRestoreLoadingMap[row.vlogId] = false;
+	}
+};
 
 // 删除/恢复视频（切换逻辑删除状态）
 const handleDeleteOrRestoreVlog = async row => {
