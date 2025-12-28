@@ -238,7 +238,8 @@ const editForm = reactive({
 
 // 表单验证规则
 const editFormRules = {
-	commentId: [{ required: true, message: "评论ID不能为空", trigger: "blur" }]
+	commentId: [{ required: true, message: "评论ID不能为空", trigger: "blur" }],
+	content: [{ required: true, message: "评论内容不能为空", trigger: "blur" }]
 };
 
 // 打开编辑对话框
@@ -265,21 +266,18 @@ const handleSubmit = async () => {
 			return;
 		}
 
+		if (!editForm.content || editForm.content.trim() === "") {
+			ElMessage.error("评论内容不能为空");
+			return;
+		}
+
 		submitLoading.value = true;
 
-		// 构建提交数据，只包含有值的字段
+		// 构建提交数据，后端要求 id 和 content 都是必需的
 		const submitData = {
-			commentId: editForm.commentId // 或者使用 id，取决于后端接口要求
+			id: editForm.commentId, // 后端接口要求使用 id 字段
+			content: editForm.content.trim() // 后端接口要求 content 不能为空
 		};
-
-		if (editForm.content !== undefined && editForm.content !== null && editForm.content !== "") {
-			submitData.content = editForm.content;
-		}
-		if (editForm.fatherCommentId !== undefined && editForm.fatherCommentId !== null && editForm.fatherCommentId !== "") {
-			submitData.fatherCommentId = editForm.fatherCommentId;
-		}
-		// 注意：新的 CommentAdminVO 中没有 isLike 字段，如果需要编辑点赞状态，可能需要单独处理
-		// if (editForm.isLike !== undefined && editForm.isLike !== null) submitData.isLike = editForm.isLike;
 
 		const res = await updateCommentInfo(submitData);
 

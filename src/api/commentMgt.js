@@ -26,20 +26,18 @@ export const getCommentAdminList = (params = {}) => {
 
 /**
  * 管理端：修改评论信息
- * 后端接口：/admin/comment/update（预留）
+ * 后端接口：/admin/comment/update
  *
- * @param {Object} updatedCommentBO - 评论信息对象
- * @param {String} updatedCommentBO.commentId - 评论ID（必需）
- * @param {String} updatedCommentBO.content - 评论内容（可选）
- * @param {String} updatedCommentBO.fatherCommentId - 父评论ID（可选）
- * @param {Number} updatedCommentBO.isLike - 是否点赞：1-已点赞，0-未点赞（可选）
+ * @param {Object} commentUpdateBO - 评论信息对象
+ * @param {String} commentUpdateBO.id - 评论ID（必需）
+ * @param {String} commentUpdateBO.content - 评论内容（必需，不能为空）
  * @returns {Promise} 返回修改后的评论信息
  */
-export const updateCommentInfo = (updatedCommentBO) => {
+export const updateCommentInfo = (commentUpdateBO) => {
 	return service({
 		method: "POST",
 		url: "/admin/comment/update",
-		data: updatedCommentBO
+		data: commentUpdateBO
 	});
 };
 
