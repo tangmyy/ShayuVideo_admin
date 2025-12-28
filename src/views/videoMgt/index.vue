@@ -42,6 +42,13 @@
 
 				<el-table-column prop="content" label="标题/文案" min-width="220" show-overflow-tooltip />
 
+				<el-table-column prop="tag" label="标签" width="120">
+					<template #default="{ row }">
+						<el-tag v-if="row.tag" type="info" size="small">{{ row.tag }}</el-tag>
+						<span v-else style="color: #999">-</span>
+					</template>
+				</el-table-column>
+
 				<el-table-column prop="cover" label="封面" width="140">
 					<template #default="{ row }">
 						<el-image
@@ -69,10 +76,10 @@
 					</template>
 				</el-table-column>
 
-				<el-table-column prop="isDeleted" label="封禁状态" width="100">
+				<el-table-column prop="isDeleted" label="删除状态" width="100">
 					<template #default="{ row }">
 						<el-tag :type="row.isDeleted === 1 || row.isDeleted === '1' ? 'danger' : 'success'">
-							{{ row.isDeleted === 1 || row.isDeleted === "1" ? "已封禁" : "正常" }}
+							{{ row.isDeleted === 1 || row.isDeleted === "1" ? "已删除" : "正常" }}
 						</el-tag>
 					</template>
 				</el-table-column>
@@ -88,7 +95,7 @@
 							:loading="deleteOrRestoreLoadingMap[row.vlogId]"
 							@click="handleDeleteOrRestoreVlog(row)"
 						>
-							封禁
+							删除
 						</el-button>
 						<el-button
 							v-if="row.isDeleted === 1 || row.isDeleted === '1'"
@@ -97,12 +104,12 @@
 							:loading="deleteOrRestoreLoadingMap[row.vlogId]"
 							@click="handleDeleteOrRestoreVlog(row)"
 						>
-							过审
+							恢复
 						</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
-		</div>
+				</div>
 
 		<!-- 编辑视频对话框 -->
 		<el-dialog v-model="dialogVisible" title="编辑视频信息" width="600px" :close-on-click-modal="false">
@@ -156,7 +163,7 @@
 				:total="tableTotal"
 			>
 			</el-pagination>
-		</div>
+			</div>
 	</div>
 </template>
 
@@ -296,10 +303,10 @@ const handleSubmit = async () => {
 	}
 };
 
-// 每个视频封禁操作的 loading 状态
+// 每个视频删除操作的 loading 状态
 const deleteOrRestoreLoadingMap = reactive({});
 
-// 封禁/过审视频（切换逻辑封禁状态）
+// 删除/恢复视频（切换逻辑删除状态）
 const handleDeleteOrRestoreVlog = async row => {
 	if (!row || !row.vlogId) {
 		ElMessage.error("视频ID不能为空");
@@ -308,10 +315,10 @@ const handleDeleteOrRestoreVlog = async row => {
 
 	// 处理 null/undefined 的情况，以及字符串 '1' 的情况
 	const isCurrentlyDeleted = row.isDeleted === 1 || row.isDeleted === "1";
-	const actionText = isCurrentlyDeleted ? "过审" : "封禁";
+	const actionText = isCurrentlyDeleted ? "恢复" : "删除";
 	const confirmText = isCurrentlyDeleted
-		? "确定要过审该视频吗？过审后视频将可以正常显示。"
-		: "确定要封禁该视频吗？封禁后视频将无法显示，但数据会保留。";
+		? "确定要恢复该视频吗？恢复后视频将可以正常显示。"
+		: "确定要删除该视频吗？删除后视频将无法显示，但数据会保留。";
 
 	try {
 		await ElMessageBox.confirm(confirmText, `确认${actionText}`, {
