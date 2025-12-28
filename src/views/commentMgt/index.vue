@@ -1,126 +1,135 @@
 <template>
 	<div class="card">
-	<el-form :inline="true" :model="params" class="demo-form-inline">
-		<el-form-item label="视频ID">
-			<el-input v-model="params.vlogId" placeholder="请输入视频ID（留空则查询所有评论）" clearable />
-		</el-form-item>
-		<el-form-item label="评论者ID">
-			<el-input v-model="params.userId" placeholder="请输入评论者ID（留空则不按用户筛选）" clearable />
-		</el-form-item>
-		<el-form-item>
-			<el-button type="primary" @click="handleSearch()">搜索</el-button>
-			<el-button type="info" @click="handleReset()">清空</el-button>
-		</el-form-item>
-	</el-form>
+		<el-form :inline="true" :model="params" class="demo-form-inline">
+			<el-form-item label="视频ID">
+				<el-input v-model="params.vlogId" placeholder="请输入视频ID（留空则查询所有评论）" clearable />
+			</el-form-item>
+			<el-form-item label="评论者ID">
+				<el-input v-model="params.userId" placeholder="请输入评论者ID（留空则不按用户筛选）" clearable />
+			</el-form-item>
+			<el-form-item>
+				<el-button type="primary" @click="handleSearch()">搜索</el-button>
+				<el-button type="info" @click="handleResetForm()">清空</el-button>
+			</el-form-item>
+		</el-form>
 
-	<el-alert v-if="!params.vlogId && !params.userId" type="info" show-icon title="未输入筛选条件，将查询所有评论" style="margin-bottom: 10px" />
+		<el-alert
+			v-if="!params.vlogId && !params.userId"
+			type="info"
+			show-icon
+			title="未输入筛选条件，将查询所有评论"
+			style="margin-bottom: 10px"
+		/>
 
-	<div style="margin-bottom: 10px">
-		<el-button 
-			type="danger" 
-			:disabled="selectedComments.length === 0"
-			:loading="batchDeleteLoading"
-			@click="handleBatchDelete"
-		>
-			批量屏蔽 ({{ selectedComments.length }})
-		</el-button>
-	</div>
+		<div style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px">
+			<el-button v-if="batchMode !== 'delete'" type="danger" :loading="batchDeleteLoading" @click="enterBatchDeleteMode">
+				批量屏蔽
+			</el-button>
+			<el-button
+				v-if="batchMode === 'delete'"
+				type="danger"
+				:disabled="selectedDeletedComments.length === 0"
+				:loading="batchDeleteLoading"
+				@click="handleBatchDelete"
+			>
+				确认屏蔽 ({{ selectedDeletedComments.length }})
+			</el-button>
 
-	<div class="table-wrapper">
-		<el-table 
-			:data="tableData" 
-			style="width: 100%" 
-			border 
-			v-loading="tableLoading"
-			@selection-change="handleSelectionChange"
-		>
-			<el-table-column type="selection" width="55" />
-			<!-- 使用 CommentAdminVO 的字段 -->
-			<el-table-column prop="id" label="评论ID" width="180" show-overflow-tooltip />
+			<el-button v-if="batchMode !== 'restore'" type="success" :loading="batchRestoreLoading" @click="enterBatchRestoreMode">
+				批量恢复
+			</el-button>
+			<el-button
+				v-if="batchMode === 'restore'"
+				type="success"
+				:disabled="selectedRestoreComments.length === 0"
+				:loading="batchRestoreLoading"
+				@click="handleBatchRestore"
+			>
+				确认恢复 ({{ selectedRestoreComments.length }})
+			</el-button>
+			<el-button type="info" @click="handleReset"> 重置 </el-button>
+		</div>
 
-			<el-table-column prop="vlogId" label="视频ID" width="180" show-overflow-tooltip />
+		<div class="table-wrapper">
+			<el-table
+				ref="tableRef"
+				:data="tableData"
+				style="width: 100%"
+				border
+				v-loading="tableLoading"
+				@selection-change="handleSelectionChange"
+				@select-all="handleSelectAll"
+				:class="{ 'disable-select-all': !canSelectAll }"
+			>
+				<el-table-column type="selection" width="55" :selectable="checkSelectable" />
+				<!-- 使用 CommentAdminVO 的字段 -->
+				<el-table-column prop="id" label="评论ID" width="180" show-overflow-tooltip />
 
-			<el-table-column prop="vlogTitle" label="视频标题" width="200" show-overflow-tooltip />
+				<el-table-column prop="vlogId" label="视频ID" width="180" show-overflow-tooltip />
 
-			<el-table-column prop="vlogerId" label="视频作者ID" width="180" show-overflow-tooltip />
+				<el-table-column prop="vlogTitle" label="视频标题" width="200" show-overflow-tooltip />
 
-			<el-table-column prop="vlogerNickname" label="视频作者昵称" width="150" show-overflow-tooltip />
+				<el-table-column prop="vlogerId" label="视频作者ID" width="180" show-overflow-tooltip />
 
-			<el-table-column prop="vlogerFace" label="视频作者头像" width="120">
-				<template #default="{ row }">
-					<el-image
-						v-if="row.vlogerFace"
-						:src="row.vlogerFace"
-						style="width: 50px; height: 50px; border-radius: 50%"
-						fit="cover"
-						:preview-src-list="[row.vlogerFace]"
-					/>
-					<span v-else>无头像</span>
-				</template>
-			</el-table-column>
+				<el-table-column prop="vlogerNickname" label="视频作者昵称" width="150" show-overflow-tooltip />
 
-			<el-table-column prop="commentUserId" label="评论者ID" width="180" show-overflow-tooltip />
+				<el-table-column prop="vlogerFace" label="视频作者头像" width="120">
+					<template #default="{ row }">
+						<el-image
+							v-if="row.vlogerFace"
+							:src="row.vlogerFace"
+							style="width: 50px; height: 50px; border-radius: 50%"
+							fit="cover"
+							:preview-src-list="[row.vlogerFace]"
+						/>
+						<span v-else>无头像</span>
+					</template>
+				</el-table-column>
 
-			<el-table-column prop="commentUserNickname" label="评论者昵称" width="150" show-overflow-tooltip />
+				<el-table-column prop="commentUserId" label="评论者ID" width="180" show-overflow-tooltip />
 
-			<el-table-column prop="commentUserFace" label="评论者头像" width="120">
-				<template #default="{ row }">
-					<el-image
-						v-if="row.commentUserFace"
-						:src="row.commentUserFace"
-						style="width: 50px; height: 50px; border-radius: 50%"
-						fit="cover"
-						:preview-src-list="[row.commentUserFace]"
-					/>
-					<span v-else>无头像</span>
-				</template>
-			</el-table-column>
+				<el-table-column prop="commentUserNickname" label="评论者昵称" width="150" show-overflow-tooltip />
 
-			<el-table-column prop="fatherCommentId" label="父评论ID" width="180" show-overflow-tooltip />
+				<el-table-column prop="commentUserFace" label="评论者头像" width="120">
+					<template #default="{ row }">
+						<el-image
+							v-if="row.commentUserFace"
+							:src="row.commentUserFace"
+							style="width: 50px; height: 50px; border-radius: 50%"
+							fit="cover"
+							:preview-src-list="[row.commentUserFace]"
+						/>
+						<span v-else>无头像</span>
+					</template>
+				</el-table-column>
 
-			<el-table-column prop="content" label="评论内容" min-width="260" show-overflow-tooltip />
+				<el-table-column prop="fatherCommentId" label="父评论ID" width="180" show-overflow-tooltip />
 
-			<el-table-column prop="replyedUserNickname" label="被回复用户昵称" width="150" show-overflow-tooltip />
+				<el-table-column prop="content" label="评论内容" min-width="260" show-overflow-tooltip />
 
-			<el-table-column prop="likeCounts" label="点赞数" width="90" />
+				<el-table-column prop="replyedUserNickname" label="被回复用户昵称" width="150" show-overflow-tooltip />
 
-			<el-table-column prop="createTime" label="创建时间" width="190">
-				<template #default="{ row }">
-					<span>{{ row.createTime ? new Date(row.createTime).toLocaleString() : "-" }}</span>
-				</template>
-			</el-table-column>
-			<el-table-column prop="isDeleted" label="删除状态" width="100">
-				<template #default="{ row }">
-					<el-tag :type="(row.isDeleted === 1 || row.isDeleted === '1') ? 'danger' : 'success'">
-						{{ (row.isDeleted === 1 || row.isDeleted === '1') ? "已删除" : "正常" }}
-					</el-tag>
-				</template>
-			</el-table-column>
-			<el-table-column label="操作" width="200" fixed="right">
-				<template #default="{ row }">
-					<el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-					<el-button
-						v-if="row.isDeleted !== 1 && row.isDeleted !== '1'"
-						type="danger"
-						size="small"
-						:loading="deleteOrRestoreLoadingMap[row.id]"
-						@click="handleDeleteOrRestoreComment(row)"
-					>
-						屏蔽
-					</el-button>
-					<el-button
-						v-if="row.isDeleted === 1 || row.isDeleted === '1'"
-						type="success"
-						size="small"
-						:loading="deleteOrRestoreLoadingMap[row.id]"
-						@click="handleDeleteOrRestoreComment(row)"
-					>
-						恢复
-					</el-button>
-				</template>
-			</el-table-column>
-		</el-table>
-				</div>
+				<el-table-column prop="likeCounts" label="点赞数" width="90" />
+
+				<el-table-column prop="createTime" label="创建时间" width="190">
+					<template #default="{ row }">
+						<span>{{ row.createTime ? new Date(row.createTime).toLocaleString() : "-" }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column prop="isDeleted" label="删除状态" width="100">
+					<template #default="{ row }">
+						<el-tag :type="row.isDeleted === 1 || row.isDeleted === '1' ? 'danger' : 'success'">
+							{{ row.isDeleted === 1 || row.isDeleted === "1" ? "已删除" : "正常" }}
+						</el-tag>
+					</template>
+				</el-table-column>
+				<el-table-column label="操作" width="120" fixed="right">
+					<template #default="{ row }">
+						<el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+					</template>
+				</el-table-column>
+			</el-table>
+		</div>
 
 		<!-- 编辑评论对话框 -->
 		<el-dialog v-model="dialogVisible" title="修改评论信息" width="600px" :close-on-click-modal="false">
@@ -135,7 +144,7 @@
 					<el-input v-model="editForm.content" type="textarea" :rows="4" placeholder="请输入评论内容" clearable />
 				</el-form-item>
 				<el-form-item label="父评论ID" prop="fatherCommentId">
-					<el-input v-model="editForm.fatherCommentId" placeholder="请输入父评论ID（留空表示顶级评论）" clearable />
+					<el-input v-model="editForm.fatherCommentId" placeholder="请输入父评论ID（留空表示顶级评论）" disabled />
 				</el-form-item>
 				<!-- 注意：新的 CommentAdminVO 中没有 isLike 字段，如果需要编辑点赞状态，可能需要单独处理 -->
 				<!-- <el-form-item label="是否点赞" prop="isLike">
@@ -165,12 +174,12 @@
 				:total="tableTotal"
 			>
 			</el-pagination>
-			</div>
+		</div>
 	</div>
 </template>
 
 <script setup name="commentMgt">
-import { onMounted, onActivated, ref, reactive } from "vue";
+import { onMounted, onActivated, ref, reactive, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { getCommentAdminList, updateCommentInfo, deleteOrRestoreComment } from "@/api/commentMgt";
 import { useTable } from "@/utils/tableMethod";
@@ -181,7 +190,7 @@ const {
 	tableData,
 	tableLoading,
 	handleSearch: baseHandleSearch,
-	handleReset,
+	handleReset: handleResetForm,
 	handleSizeChange,
 	handleCurrentChange
 } = useTable({
@@ -198,7 +207,7 @@ const {
 		}
 	},
 	response: {
-		handleResponseData: (list) => {
+		handleResponseData: list => {
 			// 调试：打印第一条数据，检查 isDeleted 字段
 			if (list && list.length > 0) {
 				console.log("【评论管理】第一条数据示例:", list[0]);
@@ -268,7 +277,7 @@ const handleSubmit = async () => {
 		}
 		if (editForm.fatherCommentId !== undefined && editForm.fatherCommentId !== null && editForm.fatherCommentId !== "") {
 			submitData.fatherCommentId = editForm.fatherCommentId;
-			}
+		}
 		// 注意：新的 CommentAdminVO 中没有 isLike 字段，如果需要编辑点赞状态，可能需要单独处理
 		// if (editForm.isLike !== undefined && editForm.isLike !== null) submitData.isLike = editForm.isLike;
 
@@ -296,6 +305,32 @@ const deleteOrRestoreLoadingMap = reactive({});
 // 批量操作相关
 const selectedComments = ref([]);
 const batchDeleteLoading = ref(false);
+const batchRestoreLoading = ref(false);
+const batchMode = ref(null); // 'delete' | 'restore' | null
+
+// 计算是否可以全选
+const canSelectAll = computed(() => {
+	// 如果进入了批量模式，可以全选
+	if (batchMode.value) {
+		return true;
+	}
+	// 如果已经选择了某些项，可以全选
+	if (selectedComments.value.length > 0) {
+		return true;
+	}
+	// 否则不能全选
+	return false;
+});
+
+// 计算已选中的未屏蔽评论（用于批量屏蔽）
+const selectedDeletedComments = computed(() => {
+	return selectedComments.value.filter(comment => comment.isDeleted !== 1 && comment.isDeleted !== "1");
+});
+
+// 计算已选中的已屏蔽评论（用于批量恢复）
+const selectedRestoreComments = computed(() => {
+	return selectedComments.value.filter(comment => comment.isDeleted === 1 || comment.isDeleted === "1");
+});
 
 // 删除/恢复评论（切换逻辑删除状态）
 const handleDeleteOrRestoreComment = async row => {
@@ -305,7 +340,7 @@ const handleDeleteOrRestoreComment = async row => {
 	}
 
 	// 处理 null/undefined 的情况，以及字符串 '1' 的情况
-	const isCurrentlyDeleted = row.isDeleted === 1 || row.isDeleted === '1';
+	const isCurrentlyDeleted = row.isDeleted === 1 || row.isDeleted === "1";
 	const actionText = isCurrentlyDeleted ? "恢复" : "屏蔽";
 	const confirmText = isCurrentlyDeleted
 		? "确定要恢复该评论吗？恢复后评论将可以正常显示。"
@@ -332,31 +367,118 @@ const handleDeleteOrRestoreComment = async row => {
 		if (error !== "cancel") {
 			console.error(`${actionText}评论失败:`, error);
 			ElMessage.error(error.response?.data?.msg || `${actionText}失败，请稍后重试`);
-			}
+		}
 	} finally {
 		deleteOrRestoreLoadingMap[row.id] = false;
 	}
 };
 
 // 处理表格选择变化
-const handleSelectionChange = (selection) => {
+const handleSelectionChange = selection => {
 	selectedComments.value = selection;
+};
+
+// 处理全选操作
+const handleSelectAll = selection => {
+	// 如果没有进入批量模式，且当前没有选择任何项，则阻止全选
+	if (!canSelectAll.value && selection.length > 0) {
+		// 阻止全选，清空选择
+		setTimeout(() => {
+			if (tableRef.value) {
+				tableRef.value.clearSelection();
+			}
+			selectedComments.value = [];
+		}, 0);
+		ElMessage.warning("请先进入批量屏蔽或批量恢复模式，或先选择一条评论");
+		return;
+	}
+};
+
+// 判断行是否可以被选择
+const checkSelectable = row => {
+	// 如果已经进入批量模式，按模式规则选择
+	if (batchMode.value === "delete") {
+		// 批量屏蔽模式：只能选择未屏蔽的评论
+		return row.isDeleted !== 1 && row.isDeleted !== "1";
+	}
+
+	if (batchMode.value === "restore") {
+		// 批量恢复模式：只能选择已屏蔽的评论
+		return row.isDeleted === 1 || row.isDeleted === "1";
+	}
+
+	// 未进入模式时，根据已选择的评论类型智能禁用
+	if (selectedComments.value.length === 0) {
+		// 如果还没有选择任何评论，所有行都可以选择
+		return true;
+	}
+
+	// 检查已选择的评论类型
+	const hasDeletedComment = selectedComments.value.some(comment => comment.isDeleted === 1 || comment.isDeleted === "1");
+	const hasUnDeletedComment = selectedComments.value.some(comment => comment.isDeleted !== 1 && comment.isDeleted !== "1");
+
+	const isRowDeleted = row.isDeleted === 1 || row.isDeleted === "1";
+
+	// 如果已选择了已屏蔽的评论，则只能选择已屏蔽的评论
+	if (hasDeletedComment && !hasUnDeletedComment) {
+		return isRowDeleted;
+	}
+
+	// 如果已选择了未屏蔽的评论，则只能选择未屏蔽的评论
+	if (hasUnDeletedComment && !hasDeletedComment) {
+		return !isRowDeleted;
+	}
+
+	// 如果同时选择了两种类型（理论上不应该发生），禁用所有
+	return false;
+};
+
+// 进入批量屏蔽模式
+const enterBatchDeleteMode = () => {
+	batchMode.value = "delete";
+	// 清空之前的选择
+	selectedComments.value = [];
+};
+
+// 进入批量恢复模式
+const enterBatchRestoreMode = () => {
+	batchMode.value = "restore";
+	// 清空之前的选择
+	selectedComments.value = [];
+};
+
+// 表格引用
+const tableRef = ref();
+
+// 退出批量模式
+const exitBatchMode = () => {
+	batchMode.value = null;
+	// 清空选择
+	selectedComments.value = [];
+	// 清空表格的勾选状态
+	if (tableRef.value) {
+		tableRef.value.clearSelection();
+	}
+};
+
+// 重置按钮（清空选择和退出批量模式）
+const handleReset = () => {
+	// 退出批量模式
+	batchMode.value = null;
+	// 清空选择
+	selectedComments.value = [];
+	// 清空表格的勾选状态
+	if (tableRef.value) {
+		tableRef.value.clearSelection();
+	}
 };
 
 // 批量屏蔽评论
 const handleBatchDelete = async () => {
-	if (selectedComments.value.length === 0) {
-		ElMessage.warning("请先选择要屏蔽的评论");
-		return;
-	}
-
-	// 过滤出未屏蔽的评论
-	const unDeletedComments = selectedComments.value.filter(
-		comment => comment.isDeleted !== 1 && comment.isDeleted !== '1'
-	);
+	const unDeletedComments = selectedDeletedComments.value;
 
 	if (unDeletedComments.length === 0) {
-		ElMessage.warning("所选评论中已经没有可屏蔽的评论");
+		ElMessage.warning("请先选择要屏蔽的评论");
 		return;
 	}
 
@@ -382,7 +504,7 @@ const handleBatchDelete = async () => {
 		let failCount = 0;
 
 		results.forEach((result, index) => {
-			if (result.status === 'fulfilled' && result.value.data && result.value.data.success) {
+			if (result.status === "fulfilled" && result.value.data && result.value.data.success) {
 				successCount++;
 			} else {
 				failCount++;
@@ -401,6 +523,8 @@ const handleBatchDelete = async () => {
 
 		// 清空选择
 		selectedComments.value = [];
+		// 退出批量模式
+		batchMode.value = null;
 		// 刷新列表
 		handleSearch();
 	} catch (error) {
@@ -410,6 +534,70 @@ const handleBatchDelete = async () => {
 		}
 	} finally {
 		batchDeleteLoading.value = false;
+	}
+};
+
+// 批量恢复评论
+const handleBatchRestore = async () => {
+	const deletedComments = selectedRestoreComments.value;
+
+	if (deletedComments.length === 0) {
+		ElMessage.warning("请先选择要恢复的评论");
+		return;
+	}
+
+	try {
+		await ElMessageBox.confirm(
+			`确定要恢复选中的 ${deletedComments.length} 条评论吗？恢复后评论将可以正常显示。`,
+			"确认批量恢复",
+			{
+				confirmButtonText: "确定",
+				cancelButtonText: "取消",
+				type: "warning"
+			}
+		);
+
+		batchRestoreLoading.value = true;
+
+		// 批量调用恢复接口（恢复也是调用 deleteOrRestoreComment，因为它是切换状态）
+		const promises = deletedComments.map(comment => deleteOrRestoreComment(comment.id));
+		const results = await Promise.allSettled(promises);
+
+		// 统计成功和失败的数量
+		let successCount = 0;
+		let failCount = 0;
+
+		results.forEach((result, index) => {
+			if (result.status === "fulfilled" && result.value.data && result.value.data.success) {
+				successCount++;
+			} else {
+				failCount++;
+				console.error(`恢复评论失败:`, deletedComments[index].id, result);
+			}
+		});
+
+		// 显示结果
+		if (failCount === 0) {
+			ElMessage.success(`批量恢复成功，共恢复 ${successCount} 条评论`);
+		} else if (successCount > 0) {
+			ElMessage.warning(`部分恢复成功（成功 ${successCount} 条，失败 ${failCount} 条）`);
+		} else {
+			ElMessage.error("批量恢复失败，请稍后重试");
+		}
+
+		// 清空选择
+		selectedComments.value = [];
+		// 退出批量模式
+		batchMode.value = null;
+		// 刷新列表
+		handleSearch();
+	} catch (error) {
+		if (error !== "cancel") {
+			console.error("批量恢复评论失败:", error);
+			ElMessage.error("批量恢复失败，请稍后重试");
+		}
+	} finally {
+		batchRestoreLoading.value = false;
 	}
 };
 
@@ -432,5 +620,12 @@ onActivated(() => {
 .table-wrapper :deep(.el-table__body-wrapper) {
 	overflow-y: visible !important;
 	overflow-x: auto !important;
+}
+
+/* 禁用全选复选框的样式 */
+:deep(.disable-select-all .el-table__header-wrapper .el-checkbox) {
+	pointer-events: none;
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 </style>
