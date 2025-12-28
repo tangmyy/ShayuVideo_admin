@@ -7,10 +7,12 @@
 			<el-col :xs="24" :sm="24" :md="5" :lg="5">
 				<HomeCount :list="countList[0]" />
 				<HomeCount :list="countList[1]" />
+				<HomeCount :list="countList[2]" />
 			</el-col>
 			<el-col :xs="24" :sm="24" :md="5" :lg="5">
-				<HomeCount :list="countList[2]" />
 				<HomeCount :list="countList[3]" />
+				<HomeCount :list="countList[4]" />
+				<HomeCount :list="countList[5]" />
 			</el-col>
 			<el-col :xs="24" :sm="24" :md="6" :lg="6">
 				<HomeList />
@@ -35,15 +37,36 @@ import HomeCount from "./components/HomeCount.vue";
 import HomeList from "./components/HomeList.vue";
 import HomeLine from "./components/HomeLine.vue";
 import HomeTable from "./components/HomeTable.vue";
-import { getCommentCounts, getLikeCounts, getVlogCounts, getUserCounts, getReportCounts } from "@/api/countsMgt";
+import {
+	getCommentCounts,
+	getLikeCounts,
+	getVlogCounts,
+	getUserCounts,
+	getVlogReportCounts,
+	getCommentReportCounts
+} from "@/api/countsMgt";
 
 const countList = reactive([
+	{
+		name: "账号数量",
+		date: "总",
+		type: "info",
+		count: 0, // 初始值为0，将从后端获取
+		icon: new URL("@/assets/images/upload.png", import.meta.url).href
+	},
 	{
 		name: "点赞量",
 		date: "总",
 		type: "primary",
 		count: 0, // 初始值为0，将从后端获取
 		icon: new URL("@/assets/images/money.png", import.meta.url).href
+	},
+	{
+		name: "举报视频数量",
+		date: "总",
+		type: "danger",
+		count: 0, // 初始值为0，将从后端获取
+		icon: new URL("@/assets/images/upload.png", import.meta.url).href
 	},
 	{
 		name: "视频数量",
@@ -60,40 +83,56 @@ const countList = reactive([
 		icon: new URL("@/assets/images/pie.png", import.meta.url).href
 	},
 	{
-		name: "举报数量",
+		name: "举报评论数量",
 		date: "总",
 		type: "danger",
-		count: 0, // 初始值为0，将从后端获取
-		icon: new URL("@/assets/images/upload.png", import.meta.url).href
-	},
-	{
-		name: "账号数量",
-		date: "总",
-		type: "info",
 		count: 0, // 初始值为0，将从后端获取
 		icon: new URL("@/assets/images/upload.png", import.meta.url).href
 	}
 ]);
 
+// 获取用户数量
+const fetchUserCounts = async () => {
+	try {
+		const res = await getUserCounts();
+		if (res.data && res.data.success && res.data.data !== undefined) {
+			countList[0].count = Number(res.data.data) || 0;
+		}
+	} catch (error) {
+		console.error("获取用户数量失败:", error);
+		// 失败时保持默认值0
+	}
+};
 // 获取点赞总量
 const fetchLikeCounts = async () => {
 	try {
 		const res = await getLikeCounts();
 		if (res.data && res.data.success && res.data.data !== undefined) {
-			countList[0].count = Number(res.data.data) || 0;
+			countList[1].count = Number(res.data.data) || 0;
 		}
 	} catch (error) {
 		console.error("获取点赞总量失败:", error);
 		// 失败时保持默认值0
 	}
 };
-
+// 获取视频数量
+const fetchVlogCounts = async () => {
+	try {
+		const res = await getVlogCounts();
+		if (res.data && res.data.success && res.data.data !== undefined) {
+			countList[3].count = Number(res.data.data) || 0;
+		}
+	} catch (error) {
+		console.error("获取视频数量失败:", error);
+		// 失败时保持默认值0
+	}
+};
 // 获取评论总量
 const fetchCommentCounts = async () => {
 	try {
 		const res = await getCommentCounts();
 		if (res.data && res.data.success && res.data.data !== undefined) {
-			countList[2].count = Number(res.data.data) || 0;
+			countList[4].count = Number(res.data.data) || 0;
 		}
 	} catch (error) {
 		console.error("获取评论总量失败:", error);
@@ -101,41 +140,28 @@ const fetchCommentCounts = async () => {
 	}
 };
 
-// 获取视频数量
-const fetchVlogCounts = async () => {
+// 获取视频举报数量
+const fetchVlogReportCounts = async () => {
 	try {
-		const res = await getVlogCounts();
+		const res = await getVlogReportCounts();
 		if (res.data && res.data.success && res.data.data !== undefined) {
-			countList[1].count = Number(res.data.data) || 0;
+			countList[2].count = Number(res.data.data) || 0;
 		}
 	} catch (error) {
-		console.error("获取视频数量失败:", error);
+		console.error("获取视频举报数量失败:", error);
 		// 失败时保持默认值0
 	}
 };
 
-// 获取举报数量
-const fetchReportCounts = async () => {
+// 获取评论举报数量
+const fetchCommentReportCounts = async () => {
 	try {
-		const res = await getReportCounts();
+		const res = await getCommentReportCounts();
 		if (res.data && res.data.success && res.data.data !== undefined) {
-			countList[3].count = Number(res.data.data) || 0;
+			countList[5].count = Number(res.data.data) || 0;
 		}
 	} catch (error) {
-		console.error("获取举报数量失败:", error);
-		// 失败时保持默认值0
-	}
-};
-
-// 获取用户数量
-const fetchUserCounts = async () => {
-	try {
-		const res = await getUserCounts();
-		if (res.data && res.data.success && res.data.data !== undefined) {
-			countList[4].count = Number(res.data.data) || 0;
-		}
-	} catch (error) {
-		console.error("获取用户数量失败:", error);
+		console.error("获取评论举报数量失败:", error);
 		// 失败时保持默认值0
 	}
 };
@@ -145,6 +171,7 @@ onMounted(() => {
 	fetchVlogCounts();
 	fetchCommentCounts();
 	fetchUserCounts();
-	fetchReportCounts();
+	fetchVlogReportCounts();
+	fetchCommentReportCounts();
 });
 </script>

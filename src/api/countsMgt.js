@@ -57,7 +57,7 @@ export const getUserCounts = () => {
 };
 
 /**
- * 管理端：统计所有举报数量
+ * 管理端：统计所有举报数量（已废弃，请使用 getVlogReportCounts 和 getCommentReportCounts）
  * 后端接口：/admin/counts/report
  * 返回所有举报的总数
  *
@@ -67,6 +67,34 @@ export const getReportCounts = () => {
 	return service({
 		method: "GET",
 		url: "/admin/counts/report"
+	});
+};
+
+/**
+ * 管理端：统计所有视频举报数量
+ * 后端接口：/admin/counts/report/vlog
+ * 返回所有视频举报的总数
+ *
+ * @returns {Promise} 返回视频举报数量（Integer）
+ */
+export const getVlogReportCounts = () => {
+	return service({
+		method: "GET",
+		url: "/admin/counts/report/vlog"
+	});
+};
+
+/**
+ * 管理端：统计所有评论举报数量
+ * 后端接口：/admin/counts/report/comment
+ * 返回所有评论举报的总数
+ *
+ * @returns {Promise} 返回评论举报数量（Integer）
+ */
+export const getCommentReportCounts = () => {
+	return service({
+		method: "GET",
+		url: "/admin/counts/report/comment"
 	});
 };
 
