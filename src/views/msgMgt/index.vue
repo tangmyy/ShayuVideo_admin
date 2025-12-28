@@ -37,7 +37,7 @@
 
 				<el-table-column prop="msgType" label="消息类型" width="120">
 					<template #default="{ row }">
-						<el-tag type="info">{{ row.msgType }}</el-tag>
+						<el-tag type="info">{{ getMsgTypeText(row.msgType) }}</el-tag>
 					</template>
 				</el-table-column>
 
@@ -261,6 +261,22 @@ const formatMsgContent = content => {
 	} catch {
 		return String(content);
 	}
+};
+
+// 消息类型枚举映射
+const MSG_TYPE_MAP = {
+	1: "关注",
+	2: "点赞视频",
+	3: "评论视频",
+	4: "回复评论",
+	5: "点赞评论",
+	6: "举报处理"
+};
+
+// 获取消息类型文字
+const getMsgTypeText = msgType => {
+	if (msgType === null || msgType === undefined) return "-";
+	return MSG_TYPE_MAP[msgType] || `未知类型(${msgType})`;
 };
 
 // 打开编辑对话框

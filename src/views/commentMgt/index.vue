@@ -15,8 +15,26 @@
 
 	<el-alert v-if="!params.vlogId && !params.userId" type="info" show-icon title="未输入筛选条件，将查询所有评论" style="margin-bottom: 10px" />
 
+	<div style="margin-bottom: 10px">
+		<el-button 
+			type="danger" 
+			:disabled="selectedComments.length === 0"
+			:loading="batchDeleteLoading"
+			@click="handleBatchDelete"
+		>
+			批量屏蔽 ({{ selectedComments.length }})
+		</el-button>
+	</div>
+
 	<div class="table-wrapper">
-		<el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
+		<el-table 
+			:data="tableData" 
+			style="width: 100%" 
+			border 
+			v-loading="tableLoading"
+			@selection-change="handleSelectionChange"
+		>
+			<el-table-column type="selection" width="55" />
 			<!-- 使用 CommentAdminVO 的字段 -->
 			<el-table-column prop="id" label="评论ID" width="180" show-overflow-tooltip />
 
@@ -88,7 +106,7 @@
 						:loading="deleteOrRestoreLoadingMap[row.id]"
 						@click="handleDeleteOrRestoreComment(row)"
 					>
-						删除
+						屏蔽
 					</el-button>
 					<el-button
 						v-if="row.isDeleted === 1 || row.isDeleted === '1'"
@@ -275,6 +293,10 @@ const handleSubmit = async () => {
 // 每个评论删除操作的 loading 状态
 const deleteOrRestoreLoadingMap = reactive({});
 
+// 批量操作相关
+const selectedComments = ref([]);
+const batchDeleteLoading = ref(false);
+
 // 删除/恢复评论（切换逻辑删除状态）
 const handleDeleteOrRestoreComment = async row => {
 	if (!row || !row.id) {
@@ -284,10 +306,10 @@ const handleDeleteOrRestoreComment = async row => {
 
 	// 处理 null/undefined 的情况，以及字符串 '1' 的情况
 	const isCurrentlyDeleted = row.isDeleted === 1 || row.isDeleted === '1';
-	const actionText = isCurrentlyDeleted ? "恢复" : "删除";
+	const actionText = isCurrentlyDeleted ? "恢复" : "屏蔽";
 	const confirmText = isCurrentlyDeleted
 		? "确定要恢复该评论吗？恢复后评论将可以正常显示。"
-		: "确定要删除该评论吗？删除后评论将无法显示，但数据会保留。";
+		: "确定要屏蔽该评论吗？屏蔽后评论将无法显示，但数据会保留。";
 
 	try {
 		await ElMessageBox.confirm(confirmText, `确认${actionText}`, {
@@ -313,6 +335,81 @@ const handleDeleteOrRestoreComment = async row => {
 			}
 	} finally {
 		deleteOrRestoreLoadingMap[row.id] = false;
+	}
+};
+
+// 处理表格选择变化
+const handleSelectionChange = (selection) => {
+	selectedComments.value = selection;
+};
+
+// 批量屏蔽评论
+const handleBatchDelete = async () => {
+	if (selectedComments.value.length === 0) {
+		ElMessage.warning("请先选择要屏蔽的评论");
+		return;
+	}
+
+	// 过滤出未屏蔽的评论
+	const unDeletedComments = selectedComments.value.filter(
+		comment => comment.isDeleted !== 1 && comment.isDeleted !== '1'
+	);
+
+	if (unDeletedComments.length === 0) {
+		ElMessage.warning("所选评论中已经没有可屏蔽的评论");
+		return;
+	}
+
+	try {
+		await ElMessageBox.confirm(
+			`确定要屏蔽选中的 ${unDeletedComments.length} 条评论吗？屏蔽后评论将无法显示，但数据会保留。`,
+			"确认批量屏蔽",
+			{
+				confirmButtonText: "确定",
+				cancelButtonText: "取消",
+				type: "warning"
+			}
+		);
+
+		batchDeleteLoading.value = true;
+
+		// 批量调用屏蔽接口
+		const promises = unDeletedComments.map(comment => deleteOrRestoreComment(comment.id));
+		const results = await Promise.allSettled(promises);
+
+		// 统计成功和失败的数量
+		let successCount = 0;
+		let failCount = 0;
+
+		results.forEach((result, index) => {
+			if (result.status === 'fulfilled' && result.value.data && result.value.data.success) {
+				successCount++;
+			} else {
+				failCount++;
+				console.error(`屏蔽评论失败:`, unDeletedComments[index].id, result);
+			}
+		});
+
+		// 显示结果
+		if (failCount === 0) {
+			ElMessage.success(`批量屏蔽成功，共屏蔽 ${successCount} 条评论`);
+		} else if (successCount > 0) {
+			ElMessage.warning(`部分屏蔽成功（成功 ${successCount} 条，失败 ${failCount} 条）`);
+		} else {
+			ElMessage.error("批量屏蔽失败，请稍后重试");
+		}
+
+		// 清空选择
+		selectedComments.value = [];
+		// 刷新列表
+		handleSearch();
+	} catch (error) {
+		if (error !== "cancel") {
+			console.error("批量屏蔽评论失败:", error);
+			ElMessage.error("批量屏蔽失败，请稍后重试");
+		}
+	} finally {
+		batchDeleteLoading.value = false;
 	}
 };
 
