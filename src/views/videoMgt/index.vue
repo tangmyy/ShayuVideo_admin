@@ -112,7 +112,7 @@
 							:loading="banOrRestoreLoadingMap[row.vlogId]"
 							@click="handleBanOrRestoreVlog(row)"
 						>
-							解封
+							通过
 						</el-button>
 						<el-button
 							v-if="row.isDeleted !== 1 && row.isDeleted !== '1'"
@@ -135,7 +135,7 @@
 					</template>
 				</el-table-column>
 			</el-table>
-				</div>
+		</div>
 
 		<!-- 编辑视频对话框 -->
 		<el-dialog v-model="dialogVisible" title="编辑视频信息" width="600px" :close-on-click-modal="false">
@@ -160,10 +160,10 @@
 					<el-input v-model="editForm.url" placeholder="请输入播放地址" clearable />
 				</el-form-item>
 				<el-form-item label="宽度" prop="width">
-					<el-input-number v-model="editForm.width" :min="0" placeholder="请输入宽度" style="width: 100%" />
+					<el-input-number v-model="editForm.width" :min="0" placeholder="请输入宽度" style="width: 100%" disabled />
 				</el-form-item>
 				<el-form-item label="高度" prop="height">
-					<el-input-number v-model="editForm.height" :min="0" placeholder="请输入高度" style="width: 100%" />
+					<el-input-number v-model="editForm.height" :min="0" placeholder="请输入高度" style="width: 100%" disabled />
 				</el-form-item>
 				<el-form-item label="权限" prop="isPrivate">
 					<el-select v-model="editForm.isPrivate" placeholder="请选择权限" clearable style="width: 100%">
@@ -189,7 +189,7 @@
 				:total="tableTotal"
 			>
 			</el-pagination>
-			</div>
+		</div>
 	</div>
 </template>
 
@@ -197,7 +197,14 @@
 import { onMounted, onActivated, ref, reactive, inject, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getVlogAdminList, updateVlogInfo, deleteOrRestoreVlog, setVlogSortType, getVlogSortType, auditVlog } from "@/api/vlogMgt";
+import {
+	getVlogAdminList,
+	updateVlogInfo,
+	deleteOrRestoreVlog,
+	setVlogSortType,
+	getVlogSortType,
+	auditVlog
+} from "@/api/vlogMgt";
 import { GlobalStore } from "@/stores";
 import { useTable } from "@/utils/tableMethod";
 import { KeepAliveStore } from "@/stores/modules/keepAlive";
@@ -336,7 +343,7 @@ const deleteOrRestoreLoadingMap = reactive({});
 // 每个视频封禁操作的 loading 状态
 const banOrRestoreLoadingMap = reactive({});
 
-// 封禁/解封视频（使用审核接口）
+// 封禁/通过视频（使用审核接口）
 const handleBanOrRestoreVlog = async row => {
 	if (!row || !row.vlogId) {
 		ElMessage.error("视频ID不能为空");
@@ -350,13 +357,13 @@ const handleBanOrRestoreVlog = async row => {
 		return;
 	}
 
-	// 处理审核状态：auditStatus === 2 表示已封禁，需要解封（auditStatus = 1）
+	// 处理审核状态：auditStatus === 2 表示已封禁，需要通过（auditStatus = 1）
 	// auditStatus !== 2 表示未封禁，需要封禁（auditStatus = 2）
 	const isCurrentlyBanned = row.auditStatus === 2;
-	const auditStatus = isCurrentlyBanned ? 1 : 2; // 1-通过（解封），2-拒绝（封禁）
-	const actionText = isCurrentlyBanned ? "解封" : "封禁";
+	const auditStatus = isCurrentlyBanned ? 1 : 2; // 1-通过（通过），2-拒绝（封禁）
+	const actionText = isCurrentlyBanned ? "通过" : "封禁";
 	const confirmText = isCurrentlyBanned
-		? "确定要解封该视频吗？解封后视频将可以正常显示。"
+		? "确定要通过该视频吗？通过后视频将可以正常显示。"
 		: "确定要封禁该视频吗？封禁后视频将无法显示。";
 
 	try {
