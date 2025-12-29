@@ -607,27 +607,38 @@ const handleAddUserSubmit = async () => {
 			return;
 		}
 
-		// 先检查当前列表中是否已存在该手机号的用户
+		// 先检查当前列表中是否已存在该手机号的用户（包括已删除的）
 		const existingUserInList = tableData.value.find(user => user.mobile === addForm.mobile);
+		// 检查是否存在且未删除的用户
+		const existingActiveUser = existingUserInList && (existingUserInList.isDeleted !== 1 && existingUserInList.isDeleted !== '1');
 
 		addSubmitLoading.value = true;
 		const res = await addUser(addForm.mobile);
 
 		if (res.data && res.data.success) {
 			const userData = res.data.data;
-			// 检查返回的用户ID是否已经在当前列表中
+			const userId = userData?.id || "未知";
+			const nickname = userData?.nickname || "未设置";
+			
+			// 根据后端逻辑判断操作类型：
+			// 1. 如果用户之前就存在且未删除，后端直接返回用户信息
+			// 2. 如果用户之前被逻辑删除，后端会恢复用户
+			// 3. 如果用户完全不存在，后端会创建新用户
+			
+			// 检查返回的用户是否在当前列表中
 			const userExistsInList = tableData.value.find(user => user.id === userData?.id);
-
-			// 如果用户在当前列表中已存在，或者返回的用户ID与列表中某个用户匹配，说明是已存在的用户
-			if (existingUserInList || userExistsInList) {
-				const userId = userData?.id || "未知";
-				const nickname = userData?.nickname || "未设置";
-				ElMessage.warning(`该手机号已注册！用户ID: ${userId}，昵称: ${nickname}`);
+			
+			if (existingActiveUser) {
+				// 用户之前就存在且未删除
+				ElMessage.info(`该手机号已注册！用户ID: ${userId}，昵称: ${nickname}`);
+			} else if (existingUserInList && (existingUserInList.isDeleted === 1 || existingUserInList.isDeleted === '1')) {
+				// 用户之前被逻辑删除，现在已恢复
+				ElMessage.success(`用户恢复成功！用户ID: ${userId}，昵称: ${nickname}`);
 			} else {
-				const userId = userData?.id || "未知";
-				const nickname = userData?.nickname || "未设置";
+				// 用户是新创建的
 				ElMessage.success(`新增用户成功！用户ID: ${userId}，昵称: ${nickname}`);
 			}
+			
 			addDialogVisible.value = false;
 			// 刷新列表
 			handleSearch();
