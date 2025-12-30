@@ -79,7 +79,7 @@
 				<el-table-column prop="auditStatus" label="审核状态" width="100">
 					<template #default="{ row }">
 						<el-tag :type="row.auditStatus === 2 ? 'danger' : row.auditStatus === 1 ? 'success' : 'info'">
-							{{ row.auditStatus === 2 ? "已封禁" : row.auditStatus === 1 ? "已通过" : "待审核" }}
+							{{ row.auditStatus === 2 ? "已封禁" : row.auditStatus === 1 ? "已通过" : "审核中" }}
 						</el-tag>
 					</template>
 				</el-table-column>
@@ -97,7 +97,7 @@
 					<template #default="{ row }">
 						<el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
 						<el-button
-							v-if="row.auditStatus !== 2"
+							v-if="row.auditStatus === 1"
 							type="warning"
 							size="small"
 							:loading="banOrRestoreLoadingMap[row.vlogId]"
@@ -106,7 +106,7 @@
 							封禁
 						</el-button>
 						<el-button
-							v-if="row.auditStatus === 2"
+							v-if="row.auditStatus === 0 || row.auditStatus === 2"
 							type="success"
 							size="small"
 							:loading="banOrRestoreLoadingMap[row.vlogId]"
@@ -357,12 +357,14 @@ const handleBanOrRestoreVlog = async row => {
 		return;
 	}
 
-	// 处理审核状态：auditStatus === 2 表示已封禁，需要通过（auditStatus = 1）
-	// auditStatus !== 2 表示未封禁，需要封禁（auditStatus = 2）
-	const isCurrentlyBanned = row.auditStatus === 2;
-	const auditStatus = isCurrentlyBanned ? 1 : 2; // 1-通过（通过），2-拒绝（封禁）
-	const actionText = isCurrentlyBanned ? "通过" : "封禁";
-	const confirmText = isCurrentlyBanned
+	// 处理审核状态：
+	// auditStatus === 0：待审核，需要通过（auditStatus = 1）
+	// auditStatus === 1：已通过，需要封禁（auditStatus = 2）
+	// auditStatus === 2：已封禁，需要通过（auditStatus = 1）
+	const isPassAction = row.auditStatus === 0 || row.auditStatus === 2; // 待审核或已封禁，都需要通过
+	const auditStatus = isPassAction ? 1 : 2; // 1-通过，2-拒绝（封禁）
+	const actionText = isPassAction ? "通过" : "封禁";
+	const confirmText = isPassAction
 		? "确定要通过该视频吗？通过后视频将可以正常显示。"
 		: "确定要封禁该视频吗？封禁后视频将无法显示。";
 
