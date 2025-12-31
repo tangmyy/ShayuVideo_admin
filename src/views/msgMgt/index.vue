@@ -1,11 +1,6 @@
 <template>
 	<div class="card">
-		<div style="margin-bottom: 15px">
-			<el-button type="success" @click="handleOpenSendMessageDialog">发送系统消息</el-button>
-			<el-button type="warning" @click="handleOpenSendNotificationDialog">发送系统公告</el-button>
-		</div>
-
-		<el-form :inline="true" :model="params" class="demo-form-inline">
+		<el-form :inline="true" :model="params" class="demo-form-inline" style="display: flex; align-items: center; flex-wrap: wrap">
 			<el-form-item label="接收用户ID">
 				<el-input v-model="params.userId" placeholder="请输入接收消息的用户ID" clearable />
 			</el-form-item>
@@ -13,12 +8,40 @@
 				<el-button type="primary" @click="handleSearch()">搜索</el-button>
 				<el-button type="info" @click="handleReset()">清空</el-button>
 			</el-form-item>
+			<el-form-item style="margin-left: auto">
+				<el-button type="success" @click="handleOpenSendMessageDialog">发送系统消息</el-button>
+				<el-button type="warning" @click="handleOpenSendNotificationDialog">发送系统公告</el-button>
+			</el-form-item>
 		</el-form>
 
 		<el-alert v-if="!params.userId" type="info" show-icon title="提示：不输入用户ID将查询所有消息" style="margin-bottom: 10px" />
 
+		<div style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px">
+			<el-button v-if="batchMode !== 'delete'" type="danger" :loading="batchDeleteLoading" @click="enterBatchDeleteMode">
+				批量删除
+			</el-button>
+			<el-button
+				v-if="batchMode === 'delete'"
+				type="danger"
+				:disabled="selectedMessages.length === 0"
+				:loading="batchDeleteLoading"
+				@click="handleBatchDelete"
+			>
+				确认删除 ({{ selectedMessages.length }})
+			</el-button>
+			<el-button type="info" @click="handleResetSelection">重置</el-button>
+		</div>
+
 		<div class="table-wrapper">
-			<el-table :data="tableData" style="width: 100%" border v-loading="tableLoading">
+			<el-table
+				ref="tableRef"
+				:data="tableData"
+				style="width: 100%"
+				border
+				v-loading="tableLoading"
+				@selection-change="handleSelectionChange"
+			>
+				<el-table-column type="selection" width="55" />
 				<el-table-column prop="id" label="消息ID" width="220" show-overflow-tooltip />
 
 				<el-table-column prop="fromNickname" label="发送方昵称" width="160" show-overflow-tooltip />
@@ -58,13 +81,10 @@
 					</template>
 				</el-table-column>
 
-				<el-table-column label="操作" width="200" fixed="right">
+				<el-table-column label="操作" width="120" fixed="right">
 					<template #default="{ row }">
 						<el-button type="primary" size="small" :loading="editLoadingMap[row.id]" @click="handleOpenEditDialog(row)">
 							编辑
-						</el-button>
-						<el-button type="danger" size="small" :loading="deleteLoadingMap[row.id]" @click="handleDelete(row)">
-							删除
 						</el-button>
 					</template>
 				</el-table-column>
@@ -263,8 +283,13 @@ const handleSearch = () => {
 	baseHandleSearch();
 };
 
-// 每个消息删除操作的 loading 状态
-const deleteLoadingMap = reactive({});
+// 表格引用
+const tableRef = ref();
+
+// 批量删除相关
+const selectedMessages = ref([]);
+const batchDeleteLoading = ref(false);
+const batchMode = ref(null); // 'delete' | null
 
 // 编辑消息对话框相关
 const editDialogVisible = ref(false);
@@ -289,37 +314,93 @@ const editFormRules = {
 // 每个消息编辑操作的 loading 状态
 const editLoadingMap = reactive({});
 
-// 删除消息
-const handleDelete = async row => {
-	if (!row || !row.id) {
-		ElMessage.error("消息ID不能为空");
+// 处理选择变化
+const handleSelectionChange = selection => {
+	selectedMessages.value = selection;
+};
+
+// 进入批量删除模式
+const enterBatchDeleteMode = () => {
+	batchMode.value = "delete";
+	// 清空之前的选择
+	selectedMessages.value = [];
+};
+
+// 重置选择
+const handleResetSelection = () => {
+	// 退出批量模式
+	batchMode.value = null;
+	// 清空选择
+	selectedMessages.value = [];
+	// 清空表格的勾选状态
+	if (tableRef.value) {
+		tableRef.value.clearSelection();
+	}
+};
+
+// 批量删除消息
+const handleBatchDelete = async () => {
+	if (selectedMessages.value.length === 0) {
+		ElMessage.warning("请至少选择一条消息");
 		return;
 	}
 
 	try {
-		await ElMessageBox.confirm("确定要删除这条消息吗？删除后无法恢复。", "确认删除", {
+		await ElMessageBox.confirm(`确定要删除选中的 ${selectedMessages.value.length} 条消息吗？删除后无法恢复。`, "确认批量删除", {
 			confirmButtonText: "确定",
 			cancelButtonText: "取消",
 			type: "warning"
 		});
 
-		deleteLoadingMap[row.id] = true;
-		const res = await deleteMsg(row.id);
+		batchDeleteLoading.value = true;
 
-		if (res.data && res.data.success) {
-			ElMessage.success("删除成功");
-			// 刷新列表
-			handleSearch();
+		// 批量调用删除接口
+		const promises = selectedMessages.value.map(message => deleteMsg(message.id));
+		const results = await Promise.allSettled(promises);
+
+		// 统计成功和失败的数量
+		let successCount = 0;
+		let failCount = 0;
+
+		results.forEach((result, index) => {
+			if (result.status === "fulfilled") {
+				if (result.value?.data?.success) {
+					successCount++;
+				} else {
+					failCount++;
+					console.error(`删除消息失败: ${selectedMessages.value[index].id}`, result.value?.data?.msg);
+				}
+			} else {
+				failCount++;
+				console.error(`删除消息失败: ${selectedMessages.value[index].id}`, result.reason);
+			}
+		});
+
+		// 显示结果
+		if (failCount === 0) {
+			ElMessage.success(`批量删除成功，共删除 ${successCount} 条消息`);
+		} else if (successCount > 0) {
+			ElMessage.warning(`部分删除成功（成功 ${successCount} 条，失败 ${failCount} 条）`);
 		} else {
-			ElMessage.error(res.data?.msg || "删除失败");
+			ElMessage.error("批量删除失败，请稍后重试");
 		}
+
+		// 清空选择
+		selectedMessages.value = [];
+		if (tableRef.value) {
+			tableRef.value.clearSelection();
+		}
+		// 退出批量模式
+		batchMode.value = null;
+		// 刷新列表
+		handleSearch();
 	} catch (error) {
 		if (error !== "cancel") {
-			console.error("删除消息失败:", error);
-			ElMessage.error(error.response?.data?.msg || "删除失败，请稍后重试");
+			console.error("批量删除消息失败:", error);
+			ElMessage.error("批量删除失败，请稍后重试");
 		}
 	} finally {
-		deleteLoadingMap[row.id] = false;
+		batchDeleteLoading.value = false;
 	}
 };
 
