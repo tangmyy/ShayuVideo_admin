@@ -79,8 +79,8 @@
 				</el-table-column>
 				<el-table-column prop="status" label="封禁状态" width="100">
 					<template #default="{ row }">
-						<el-tag :type="row.status === 1 ? 'warning' : 'success'">
-							{{ row.status === 1 ? "已封禁" : "正常" }}
+						<el-tag :type="row.status === 2 ? 'danger' : row.status === 1 ? 'warning' : 'success'">
+							{{ row.status === 2 ? "已封禁" : row.status === 1 ? "已禁言" : "正常" }}
 						</el-tag>
 					</template>
 				</el-table-column>
@@ -91,26 +91,58 @@
 						</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" width="280" fixed="right">
+				<el-table-column label="操作" width="360" fixed="right">
 					<template #default="{ row }">
 						<el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+						<!-- 正常状态：显示禁言和封禁 -->
 						<el-button
-							v-if="row.status !== 1"
+							v-if="row.status === 0"
 							type="warning"
 							size="small"
 							:loading="banOrRestoreLoadingMap[row.id]"
-							@click="handleBanOrRestoreUser(row)"
+							@click="handleSetUserStatus(row, 1)"
 						>
-							封禁
+							禁言
 						</el-button>
+						<!-- 禁言状态：显示恢复和封禁 -->
 						<el-button
 							v-if="row.status === 1"
 							type="success"
 							size="small"
 							:loading="banOrRestoreLoadingMap[row.id]"
-							@click="handleBanOrRestoreUser(row)"
+							@click="handleSetUserStatus(row, 0)"
 						>
-							解封
+							恢复
+						</el-button>
+						<!-- 封禁状态：显示禁言和恢复 -->
+						<el-button
+							v-if="row.status === 2"
+							type="warning"
+							size="small"
+							:loading="banOrRestoreLoadingMap[row.id]"
+							@click="handleSetUserStatus(row, 1)"
+						>
+							禁言
+						</el-button>
+						<!-- 正常或禁言状态：显示封禁按钮 -->
+						<el-button
+							v-if="row.status === 0 || row.status === 1"
+							type="danger"
+							size="small"
+							:loading="banOrRestoreLoadingMap[row.id]"
+							@click="handleSetUserStatus(row, 2)"
+						>
+							封禁
+						</el-button>
+						<!-- 封禁状态：封禁按钮变成恢复按钮 -->
+						<el-button
+							v-if="row.status === 2"
+							type="success"
+							size="small"
+							:loading="banOrRestoreLoadingMap[row.id]"
+							@click="handleSetUserStatus(row, 0)"
+						>
+							恢复
 						</el-button>
 						<el-button
 							v-if="row.isDeleted !== 1"
@@ -544,41 +576,62 @@ const handleDeleteOrRestoreUser = async row => {
 	}
 };
 
-// 封禁/恢复用户（切换用户状态）
-const handleBanOrRestoreUser = async row => {
+// 设置用户状态（支持在三个状态之间任意转换）
+const handleSetUserStatus = async (row, targetStatus) => {
 	if (!row || !row.id) {
 		ElMessage.error("用户ID不能为空");
 		return;
 	}
 
-	// 使用 status 字段判断（0=正常，1=封禁）
-	const isCurrentlyBanned = row.status === 1;
-	const actionText = isCurrentlyBanned ? "解封" : "封禁";
-	const confirmText = isCurrentlyBanned
-		? "确定要解封该用户吗？解封后用户将可以正常发布视频、发表评论、被关注。"
-		: "确定要封禁该用户吗？封禁后用户将无法发布视频、发表评论、被关注。";
+	// 如果目标状态和当前状态相同，无需操作
+	if (row.status === targetStatus) {
+		ElMessage.warning("用户已经是该状态，无需操作");
+		return;
+	}
+
+	const statusMap = {
+		0: "正常",
+		1: "禁言",
+		2: "封禁"
+	};
+	const currentStatusText = statusMap[row.status] || "未知";
+	const targetStatusText = statusMap[targetStatus] || "未知";
+	
+	let actionDesc = "";
+	if (targetStatus === 0) {
+		// 恢复为正常状态
+		actionDesc = `恢复后用户将解除${currentStatusText}状态，可以正常使用所有功能。`;
+	} else if (targetStatus === 1) {
+		// 设置为禁言状态
+		actionDesc = "禁言后用户将无法发布评论，但仍可以发布视频、被关注。";
+	} else if (targetStatus === 2) {
+		// 设置为封禁状态
+		actionDesc = "封禁后用户将无法发布视频、发表评论、关注他人和被他人关注。";
+	}
+	
+	const confirmText = `确定要将用户状态从"${currentStatusText}"设置为"${targetStatusText}"吗？${actionDesc}`;
 
 	try {
-		await ElMessageBox.confirm(confirmText, `确认${actionText}`, {
+		await ElMessageBox.confirm(confirmText, `确认设置为${targetStatusText}`, {
 			confirmButtonText: "确定",
 			cancelButtonText: "取消",
 			type: "warning"
 		});
 
 		banOrRestoreLoadingMap.value[row.id] = true;
-		const res = await banOrRestoreUser(row.id);
+		const res = await banOrRestoreUser(row.id, targetStatus);
 
 		if (res.data && res.data.success) {
-			ElMessage.success(`${actionText}成功`);
+			ElMessage.success(`设置为${targetStatusText}成功`);
 			// 刷新列表以更新状态
 			handleSearch();
 		} else {
-			ElMessage.error(res.data?.msg || `${actionText}失败`);
+			ElMessage.error(res.data?.msg || `设置为${targetStatusText}失败`);
 		}
 	} catch (error) {
 		if (error !== "cancel") {
-			console.error(`${actionText}用户失败:`, error);
-			ElMessage.error(error.response?.data?.msg || `${actionText}失败，请稍后重试`);
+			console.error(`设置用户状态失败:`, error);
+			ElMessage.error(error.response?.data?.msg || `设置为${targetStatusText}失败，请稍后重试`);
 		}
 	} finally {
 		banOrRestoreLoadingMap.value[row.id] = false;

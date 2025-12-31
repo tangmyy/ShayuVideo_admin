@@ -64,4 +64,46 @@ export const updateMsg = (updateData) => {
 	});
 };
 
+/**
+ * 管理端：主动发送系统消息给指定用户
+ * 后端接口：/admin/msg/sendSystemMessage
+ * 通过 RabbitMQ 异步发送系统消息，消息类型固定为 SYSTEM_MESSAGE(7)
+ *
+ * @param {String} handlerId - 管理员ID（必需）
+ * @param {String} toUserId - 接收用户ID（必需）
+ * @param {String} [msgContent] - 消息内容（可选，JSON字符串格式）
+ * @returns {Promise} 返回操作结果
+ */
+export const sendSystemMessage = (handlerId, toUserId, msgContent) => {
+	return service({
+		method: "POST",
+		url: "/admin/msg/sendSystemMessage",
+		params: {
+			handlerId: handlerId,
+			toUserId: toUserId,
+			msgContent: msgContent || undefined
+		}
+	});
+};
+
+/**
+ * 管理端：发送系统公告/活动通知给所有用户
+ * 后端接口：/admin/msg/sendSystemNotification
+ * 通过 RabbitMQ 异步发送公告给所有未删除的用户，消息类型固定为 SYSTEM_ANNOUNCEMENT(8)
+ *
+ * @param {String} handlerId - 管理员ID（必需）
+ * @param {String} [msgContent] - 消息内容（可选，JSON字符串格式）
+ * @returns {Promise} 返回操作结果
+ */
+export const sendSystemNotification = (handlerId, msgContent) => {
+	return service({
+		method: "POST",
+		url: "/admin/msg/sendSystemNotification",
+		params: {
+			handlerId: handlerId,
+			msgContent: msgContent || undefined
+		}
+	});
+};
+
 

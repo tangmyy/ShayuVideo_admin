@@ -105,19 +105,21 @@ export const deleteOrRestoreUser = (userId) => {
 };
 
 /**
- * 管理端：封禁/恢复用户（切换用户状态）
+ * 管理端：设置用户状态
  * 后端接口：/admin/users/banOrRestore
- * 如果用户是正常状态（status = 0），则封禁（设置为 1）
- * 如果用户是封禁状态（status = 1），则恢复（设置为 0）
+ * status: 0-正常，1-禁言（禁止发布评论），2-封禁（禁止发视频和发评论和关注他人和被他人关注）
+ * 前端直接传递目标状态值，可以在三个状态之间任意转换
  * @param {String} userId - 用户ID（必需）
+ * @param {Number} status - 目标状态（必需）：0-正常，1-禁言，2-封禁
  * @returns {Promise} 返回更新后的用户信息
  */
-export const banOrRestoreUser = (userId) => {
+export const banOrRestoreUser = (userId, status) => {
 	return service({
 		method: "POST",
 		url: "/admin/users/banOrRestore",
 		params: {
-			userId: userId
+			userId: userId,
+			status: status
 		}
 	});
 };
