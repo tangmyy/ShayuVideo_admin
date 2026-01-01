@@ -102,7 +102,7 @@
 			"path": "/reportMgt",
 			"name": "reportMgt",
 			"component": "/reportMgt/index",
-			"id": "f",
+			"id": "g",
 			"parentId": null,
 			"title": "举报管理",
 			"meta": {
@@ -113,8 +113,23 @@
 				"isAffix": false,
 				"isKeepAlive": true
 			}
+		},
+		{
+			"path": "/appealMgt",
+			"name": "appealMgt",
+			"component": "/appealMgt/index",
+			"id": "h",
+			"parentId": null,
+			"title": "申诉管理",
+			"meta": {
+				"icon": "Warning",
+				"isLink": "",
+				"isHide": false,
+				"isFull": false,
+				"isAffix": false,
+				"isKeepAlive": true
+			}
 		}
-
 	],
 	"msg": "成功"
 }
