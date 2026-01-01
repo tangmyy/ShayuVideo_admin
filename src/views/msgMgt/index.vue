@@ -418,6 +418,8 @@ const MSG_CONTENT_FIELD_MAP = {
 	// 举报处理
 	reportId: "举报ID",
 	handleResult: "处理结果",
+	// 申诉处理
+	appealId: "申诉ID",
 	// 系统消息/公告
 	title: "标题",
 	content: "内容",
@@ -479,8 +481,9 @@ const MSG_TYPE_MAP = {
 	4: "回复评论",
 	5: "点赞评论",
 	6: "举报处理",
-	7: "系统消息",
-	8: "系统公告"
+	7: "申诉处理",
+	8: "系统消息",
+	9: "系统公告"
 };
 
 // 获取消息类型文字
