@@ -14,7 +14,7 @@
 				<HomeCount :list="countList[4]" />
 				<HomeCount :list="countList[5]" />
 			</el-col>
-			<el-col :xs="24" :sm="24" :md="6" :lg="6">
+			<!-- <el-col :xs="24" :sm="24" :md="6" :lg="6">
 				<HomeList />
 			</el-col>
 			<el-col :xs="24" :sm="24" :md="8" :lg="8">
@@ -25,7 +25,7 @@
 			</el-col>
 			<el-col :xs="24" :sm="24" :md="24" :lg="24">
 				<HomeLine />
-			</el-col>
+			</el-col> -->
 		</el-row>
 	</div>
 </template>
