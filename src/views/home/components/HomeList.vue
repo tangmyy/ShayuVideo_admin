@@ -15,8 +15,8 @@
 						<div class="table-header-wrapper">
 							<span>排行榜</span>
 							<el-radio-group v-model="sortType" size="small" @change="handleSortTypeChange">
-								<el-radio-button label="fans">粉丝</el-radio-button>
 								<el-radio-button label="videos">视频</el-radio-button>
+								<el-radio-button label="fans">粉丝</el-radio-button>
 							</el-radio-group>
 						</div>
 					</template>
@@ -42,7 +42,7 @@ import { ElMessage } from "element-plus";
 
 const loading = ref(false);
 const tableData = reactive([]);
-const sortType = ref("fans"); // 默认显示粉丝排行榜
+const sortType = ref("videos"); // 默认显示视频排行榜
 
 // 颜色数组，用于进度条
 const colors = ["#f05e53", "#926fd0", "#7ab9eb", "#f0c17b", "#8be38f", "#f19e83", "#8392e6", "#e6a3d3", "#a3d3e6", "#d3e6a3"];

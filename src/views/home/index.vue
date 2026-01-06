@@ -15,12 +15,12 @@
 			<el-col :xs="24" :sm="24" :md="6" :lg="6">
 				<HomeList />
 			</el-col>
-			<el-col :xs="24" :sm="24" :md="8" :lg="8">
+			<!-- <el-col :xs="24" :sm="24" :md="8" :lg="8">
 				<HomeTable />
 			</el-col>
 			<el-col :xs="24" :sm="24" :md="16" :lg="16">
 				<HomeLine />
-			</el-col>
+			</el-col> -->
 			<el-col :xs="24" :sm="24" :md="24" :lg="24">
 				<HomeLine />
 			</el-col>

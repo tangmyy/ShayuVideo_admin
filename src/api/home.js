@@ -18,3 +18,18 @@ export const getActiveUsers = (params) => {
 	});
 };
 
+/**
+ * 获取每月视频发布总数
+ * @param {Number} year - 年份，默认为当前年份
+ * @returns {Promise} 返回每月视频发布数量数组，按月份顺序（1-12月）
+ */
+export const getMonthlyVideos = (year) => {
+	return service({
+		method: "GET",
+		url: "/admin/home/monthlyVideos",
+		params: {
+			year: year || undefined
+		}
+	});
+};
+
