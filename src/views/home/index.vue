@@ -6,15 +6,13 @@
 			</el-col>
 			<el-col :xs="24" :sm="24" :md="5" :lg="5">
 				<HomeCount :list="countList[0]" />
-				<HomeCount :list="countList[1]" />
 				<HomeCount :list="countList[2]" />
 			</el-col>
 			<el-col :xs="24" :sm="24" :md="5" :lg="5">
 				<HomeCount :list="countList[3]" />
-				<HomeCount :list="countList[4]" />
 				<HomeCount :list="countList[5]" />
 			</el-col>
-			<!-- <el-col :xs="24" :sm="24" :md="6" :lg="6">
+			<el-col :xs="24" :sm="24" :md="6" :lg="6">
 				<HomeList />
 			</el-col>
 			<el-col :xs="24" :sm="24" :md="8" :lg="8">
@@ -25,7 +23,7 @@
 			</el-col>
 			<el-col :xs="24" :sm="24" :md="24" :lg="24">
 				<HomeLine />
-			</el-col> -->
+			</el-col>
 		</el-row>
 	</div>
 </template>
@@ -50,21 +48,21 @@ const countList = reactive([
 	{
 		name: "账号数量",
 		date: "总",
-		type: "info",
+		type: "primary",
 		count: 0, // 初始值为0，将从后端获取
-		icon: new URL("@/assets/images/upload.png", import.meta.url).href
+		icon: new URL("@/assets/images/pie.png", import.meta.url).href
 	},
 	{
 		name: "点赞量",
 		date: "总",
-		type: "primary",
+		type: "info",
 		count: 0, // 初始值为0，将从后端获取
 		icon: new URL("@/assets/images/money.png", import.meta.url).href
 	},
 	{
 		name: "举报视频数量",
 		date: "总",
-		type: "danger",
+		type: "warning",
 		count: 0, // 初始值为0，将从后端获取
 		icon: new URL("@/assets/images/upload.png", import.meta.url).href
 	},

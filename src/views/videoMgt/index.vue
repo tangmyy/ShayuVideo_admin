@@ -135,7 +135,7 @@
 					</template>
 				</el-table-column>
 			</el-table>
-		</div>
+				</div>
 
 		<!-- 编辑视频对话框 -->
 		<el-dialog v-model="dialogVisible" title="编辑视频信息" width="600px" :close-on-click-modal="false">
@@ -189,7 +189,7 @@
 				:total="tableTotal"
 			>
 			</el-pagination>
-		</div>
+			</div>
 	</div>
 </template>
 
@@ -470,7 +470,7 @@ const convertSortTypeToNumber = data => {
 		// 如果对象本身是枚举名称（检查对象的 name 或其他字段）
 		if (data.name && sortTypeEnumMap[data.name] !== undefined) {
 			return sortTypeEnumMap[data.name];
-		}
+			}
 	}
 
 	// 如果直接是数字
@@ -550,7 +550,7 @@ const handleSetSortType = async () => {
 		await fetchSortType();
 	} finally {
 		setSortTypeLoading.value = false;
-	}
+		}
 };
 
 onMounted(() => {

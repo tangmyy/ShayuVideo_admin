@@ -129,7 +129,7 @@
 					</template>
 				</el-table-column>
 			</el-table>
-		</div>
+				</div>
 
 		<!-- 编辑评论对话框 -->
 		<el-dialog v-model="dialogVisible" title="修改评论信息" width="600px" :close-on-click-modal="false">
@@ -174,7 +174,7 @@
 				:total="tableTotal"
 			>
 			</el-pagination>
-		</div>
+			</div>
 	</div>
 </template>
 
