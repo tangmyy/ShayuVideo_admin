@@ -5,7 +5,8 @@ import service from "@/utils/service.js";
  * 后端接口：/admin/vlog/list
  *
  * @param {Object} params - 查询参数
- * @param {String} params.search - 搜索关键字（可选）
+ * @param {String} params.search - 搜索关键字（标题关键字，可选）
+ * @param {String} params.vlogId - 视频ID（可选）
  * @param {Number} params.page - 页码（默认 1）
  * @param {Number} params.pageSize - 每页数量（默认 10）
  * @returns {Promise} 返回视频列表分页数据
@@ -16,6 +17,7 @@ export const getVlogAdminList = (params = {}) => {
 		url: "/admin/vlog/list",
 		params: {
 			search: params.search || undefined,
+			vlogId: params.vlogId || undefined,
 			page: params.page || 1,
 			pageSize: params.pageSize || 10
 		}

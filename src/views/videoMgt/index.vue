@@ -1,8 +1,11 @@
 <template>
 	<div class="card">
 		<el-form :inline="true" :model="params" class="demo-form-inline">
-			<el-form-item label="搜索关键字">
+			<el-form-item label="标题关键字">
 				<el-input v-model="params.search" placeholder="请输入视频标题关键字" clearable />
+			</el-form-item>
+			<el-form-item label="视频ID">
+				<el-input v-model="params.vlogId" placeholder="请输入视频ID" clearable />
 			</el-form-item>
 			<el-form-item>
 				<el-button type="primary" @click="handleSearch()">搜索</el-button>
@@ -135,7 +138,7 @@
 					</template>
 				</el-table-column>
 			</el-table>
-				</div>
+		</div>
 
 		<!-- 编辑视频对话框 -->
 		<el-dialog v-model="dialogVisible" title="编辑视频信息" width="600px" :close-on-click-modal="false">
@@ -189,7 +192,7 @@
 				:total="tableTotal"
 			>
 			</el-pagination>
-			</div>
+		</div>
 	</div>
 </template>
 
@@ -223,6 +226,7 @@ const { params, tableTotal, tableData, tableLoading, handleSearch, handleReset, 
 			totalKey: "data.records", // 从 res.data 开始取总记录数
 			params: {
 				search: "",
+				vlogId: "",
 				page: 1,
 				pageSize: 10
 			}
@@ -470,7 +474,7 @@ const convertSortTypeToNumber = data => {
 		// 如果对象本身是枚举名称（检查对象的 name 或其他字段）
 		if (data.name && sortTypeEnumMap[data.name] !== undefined) {
 			return sortTypeEnumMap[data.name];
-			}
+		}
 	}
 
 	// 如果直接是数字
@@ -550,7 +554,7 @@ const handleSetSortType = async () => {
 		await fetchSortType();
 	} finally {
 		setSortTypeLoading.value = false;
-		}
+	}
 };
 
 onMounted(() => {
